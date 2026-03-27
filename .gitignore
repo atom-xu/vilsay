@@ -1,0 +1,36 @@
+# Xcode / SPM
+vilsay/.derivedData/
+vilsay/build.log
+**/*.xcuserstate
+**/xcuserdata/
+
+# macOS
+.DS_Store
+
+# 密钥与本地环境（勿提交）
+.env
+.env.*
+Secrets.xcconfig
+**/Secrets.xcconfig
+*.pem
+API_KEYS_AND_SECRETS.md
+docs/status/API_KEYS_AND_SECRETS.md
+
+# Website
+website/node_modules/
+website/.next/
+website/out/
+
+# Xcode DerivedData（标准路径）
+vilsay/vilsay.xcodeproj/project.xcworkspace/xcuserdata/
+DerivedData/
+
+# Python 虚拟环境
+server/.venv/
+**/.venv/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# Claude 本地配置（不入库）
+.claude/settings.local.json

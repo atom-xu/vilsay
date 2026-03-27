@@ -1,0 +1,804 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		5C36931C2F6F9664004AE5E3 /* CLEANUP_REPORT.md in Resources */ = {isa = PBXBuildFile; fileRef = 5C36931B2F6F9664004AE5E3 /* CLEANUP_REPORT.md */; };
+		5CA658942F6F851600BBBEA5 /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5CA659102F6F840400BBBEA5 /* WhisperKit */; };
+		5CA658952F6F851600BBBEA5 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 5CA659112F6F840400BBBEA5 /* GRDB */; };
+		5CA658972F6F851600BBBEA5 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = 5CA659132F6F840400BBBEA5 /* LaunchAtLogin */; };
+		A1B2C3D42E1F100000000106 /* HotkeyMonitorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D42E1F100000000102 /* HotkeyMonitorService.swift */; };
+		A1B2C3D42E1F100000000107 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D42E1F100000000103 /* main.swift */; };
+		A1B2C3D42E1F100000000119 /* HotkeyMonitor.xpc in Embed XPC Services */ = {isa = PBXBuildFile; fileRef = A1B2C3D42E1F100000000101 /* HotkeyMonitor.xpc */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		5CA658782F6F840600BBBEA5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5CA658622F6F840400BBBEA5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5CA658692F6F840400BBBEA5;
+			remoteInfo = vilsay;
+		};
+		5CA658822F6F840600BBBEA5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5CA658622F6F840400BBBEA5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5CA658692F6F840400BBBEA5;
+			remoteInfo = vilsay;
+		};
+		A1B2C3D42E1F100000000131 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5CA658622F6F840400BBBEA5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1B2C3D42E1F100000000100;
+			remoteInfo = HotkeyMonitor;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A1B2C3D42E1F100000000116 /* Embed XPC Services */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = Contents/XPCServices;
+			dstSubfolderSpec = 1;
+			files = (
+				A1B2C3D42E1F100000000119 /* HotkeyMonitor.xpc in Embed XPC Services */,
+			);
+			name = "Embed XPC Services";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		5C36931B2F6F9664004AE5E3 /* CLEANUP_REPORT.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLEANUP_REPORT.md; sourceTree = "<group>"; };
+		5CA6586A2F6F840400BBBEA5 /* vilsay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = vilsay.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5CA658772F6F840600BBBEA5 /* vilsayTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = vilsayTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5CA658812F6F840600BBBEA5 /* vilsayUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = vilsayUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1B2C3D42E1F100000000101 /* HotkeyMonitor.xpc */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.xpc-service"; path = HotkeyMonitor.xpc; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1B2C3D42E1F100000000102 /* HotkeyMonitorService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyMonitorService.swift; sourceTree = "<group>"; };
+		A1B2C3D42E1F100000000103 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		A1B2C3D42E1F100000000104 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		5CA6586C2F6F840400BBBEA5 /* vilsay */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = vilsay;
+			sourceTree = "<group>";
+		};
+		5CA6587A2F6F840600BBBEA5 /* vilsayTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = vilsayTests;
+			sourceTree = "<group>";
+		};
+		5CA658842F6F840600BBBEA5 /* vilsayUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = vilsayUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5CA658672F6F840400BBBEA5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5CA658972F6F851600BBBEA5 /* LaunchAtLogin in Frameworks */,
+				5CA658952F6F851600BBBEA5 /* GRDB in Frameworks */,
+				5CA658942F6F851600BBBEA5 /* WhisperKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5CA658742F6F840600BBBEA5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5CA6587E2F6F840600BBBEA5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1B2C3D42E1F100000000111 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5CA658612F6F840400BBBEA5 = {
+			isa = PBXGroup;
+			children = (
+				5CA6586C2F6F840400BBBEA5 /* vilsay */,
+				A1B2C3D42E1F100000000105 /* HotkeyMonitor */,
+				5CA6587A2F6F840600BBBEA5 /* vilsayTests */,
+				5CA658842F6F840600BBBEA5 /* vilsayUITests */,
+				5CA6586B2F6F840400BBBEA5 /* Products */,
+				5C36931B2F6F9664004AE5E3 /* CLEANUP_REPORT.md */,
+			);
+			sourceTree = "<group>";
+		};
+		5CA6586B2F6F840400BBBEA5 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5CA6586A2F6F840400BBBEA5 /* vilsay.app */,
+				A1B2C3D42E1F100000000101 /* HotkeyMonitor.xpc */,
+				5CA658772F6F840600BBBEA5 /* vilsayTests.xctest */,
+				5CA658812F6F840600BBBEA5 /* vilsayUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A1B2C3D42E1F100000000105 /* HotkeyMonitor */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D42E1F100000000102 /* HotkeyMonitorService.swift */,
+				A1B2C3D42E1F100000000103 /* main.swift */,
+				A1B2C3D42E1F100000000104 /* Info.plist */,
+			);
+			path = HotkeyMonitor;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5CA658692F6F840400BBBEA5 /* vilsay */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5CA6588B2F6F840600BBBEA5 /* Build configuration list for PBXNativeTarget "vilsay" */;
+			buildPhases = (
+				5CA658662F6F840400BBBEA5 /* Sources */,
+				5CA658672F6F840400BBBEA5 /* Frameworks */,
+				A1B2C3D42E1F100000000116 /* Embed XPC Services */,
+				5CA658682F6F840400BBBEA5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A1B2C3D42E1F100000000130 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				5CA6586C2F6F840400BBBEA5 /* vilsay */,
+			);
+			name = vilsay;
+			packageProductDependencies = (
+				5CA659102F6F840400BBBEA5 /* WhisperKit */,
+				5CA659112F6F840400BBBEA5 /* GRDB */,
+				5CA659132F6F840400BBBEA5 /* LaunchAtLogin */,
+			);
+			productName = vilsay;
+			productReference = 5CA6586A2F6F840400BBBEA5 /* vilsay.app */;
+			productType = "com.apple.product-type.application";
+		};
+		5CA658762F6F840600BBBEA5 /* vilsayTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5CA6588E2F6F840600BBBEA5 /* Build configuration list for PBXNativeTarget "vilsayTests" */;
+			buildPhases = (
+				5CA658732F6F840600BBBEA5 /* Sources */,
+				5CA658742F6F840600BBBEA5 /* Frameworks */,
+				5CA658752F6F840600BBBEA5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5CA658792F6F840600BBBEA5 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				5CA6587A2F6F840600BBBEA5 /* vilsayTests */,
+			);
+			name = vilsayTests;
+			packageProductDependencies = (
+			);
+			productName = vilsayTests;
+			productReference = 5CA658772F6F840600BBBEA5 /* vilsayTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		5CA658802F6F840600BBBEA5 /* vilsayUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5CA658912F6F840600BBBEA5 /* Build configuration list for PBXNativeTarget "vilsayUITests" */;
+			buildPhases = (
+				5CA6587D2F6F840600BBBEA5 /* Sources */,
+				5CA6587E2F6F840600BBBEA5 /* Frameworks */,
+				5CA6587F2F6F840600BBBEA5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5CA658832F6F840600BBBEA5 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				5CA658842F6F840600BBBEA5 /* vilsayUITests */,
+			);
+			name = vilsayUITests;
+			packageProductDependencies = (
+			);
+			productName = vilsayUITests;
+			productReference = 5CA658812F6F840600BBBEA5 /* vilsayUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		A1B2C3D42E1F100000000100 /* HotkeyMonitor */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1B2C3D42E1F100000000113 /* Build configuration list for PBXNativeTarget "HotkeyMonitor" */;
+			buildPhases = (
+				A1B2C3D42E1F100000000110 /* Sources */,
+				A1B2C3D42E1F100000000111 /* Frameworks */,
+				A1B2C3D42E1F100000000112 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HotkeyMonitor;
+			packageProductDependencies = (
+			);
+			productName = HotkeyMonitor;
+			productReference = A1B2C3D42E1F100000000101 /* HotkeyMonitor.xpc */;
+			productType = "com.apple.product-type.xpc-service";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5CA658622F6F840400BBBEA5 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2620;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					5CA658692F6F840400BBBEA5 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					5CA658762F6F840600BBBEA5 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = 5CA658692F6F840400BBBEA5;
+					};
+					5CA658802F6F840600BBBEA5 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = 5CA658692F6F840400BBBEA5;
+					};
+					A1B2C3D42E1F100000000100 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+				};
+			};
+			buildConfigurationList = 5CA658652F6F840400BBBEA5 /* Build configuration list for PBXProject "vilsay" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 5CA658612F6F840400BBBEA5;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				5CA659002F6F840400BBBEA5 /* XCRemoteSwiftPackageReference "WhisperKit" */,
+				5CA659012F6F840400BBBEA5 /* XCRemoteSwiftPackageReference "GRDB.swift" */,
+				5CA659032F6F840400BBBEA5 /* XCRemoteSwiftPackageReference "LaunchAtLogin-modern" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 5CA6586B2F6F840400BBBEA5 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5CA658692F6F840400BBBEA5 /* vilsay */,
+				A1B2C3D42E1F100000000100 /* HotkeyMonitor */,
+				5CA658762F6F840600BBBEA5 /* vilsayTests */,
+				5CA658802F6F840600BBBEA5 /* vilsayUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5CA658682F6F840400BBBEA5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5C36931C2F6F9664004AE5E3 /* CLEANUP_REPORT.md in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5CA658752F6F840600BBBEA5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5CA6587F2F6F840600BBBEA5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1B2C3D42E1F100000000112 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5CA658662F6F840400BBBEA5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5CA658732F6F840600BBBEA5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5CA6587D2F6F840600BBBEA5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1B2C3D42E1F100000000110 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1B2C3D42E1F100000000106 /* HotkeyMonitorService.swift in Sources */,
+				A1B2C3D42E1F100000000107 /* main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		5CA658792F6F840600BBBEA5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5CA658692F6F840400BBBEA5 /* vilsay */;
+			targetProxy = 5CA658782F6F840600BBBEA5 /* PBXContainerItemProxy */;
+		};
+		5CA658832F6F840600BBBEA5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5CA658692F6F840400BBBEA5 /* vilsay */;
+			targetProxy = 5CA658822F6F840600BBBEA5 /* PBXContainerItemProxy */;
+		};
+		A1B2C3D42E1F100000000130 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1B2C3D42E1F100000000100 /* HotkeyMonitor */;
+			targetProxy = A1B2C3D42E1F100000000131 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		5CA658892F6F840600BBBEA5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		5CA6588A2F6F840600BBBEA5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		5CA6588C2F6F840600BBBEA5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = vilsay/vilsay.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = AJGT557XG8;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Vilsay 需要使用麦克风以将语音转为文字。";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = vilhil.cn.vilsay;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = NO;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		5CA6588D2F6F840600BBBEA5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = vilsay/vilsay.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = AJGT557XG8;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Vilsay 需要使用麦克风以将语音转为文字。";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = vilhil.cn.vilsay;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = NO;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		5CA6588F2F6F840600BBBEA5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = vilhil.cn.vilsayTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/vilsay.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/vilsay";
+			};
+			name = Debug;
+		};
+		5CA658902F6F840600BBBEA5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = vilhil.cn.vilsayTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/vilsay.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/vilsay";
+			};
+			name = Release;
+		};
+		5CA658922F6F840600BBBEA5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = vilhil.cn.vilsayUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = vilsay;
+			};
+			name = Debug;
+		};
+		5CA658932F6F840600BBBEA5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = vilhil.cn.vilsayUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = vilsay;
+			};
+			name = Release;
+		};
+		A1B2C3D42E1F100000000114 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = AJGT557XG8;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = HotkeyMonitor/Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vilsay.HotkeyMonitor;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = NO;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A1B2C3D42E1F100000000115 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = AJGT557XG8;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = HotkeyMonitor/Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vilsay.HotkeyMonitor;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = NO;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5CA658652F6F840400BBBEA5 /* Build configuration list for PBXProject "vilsay" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5CA658892F6F840600BBBEA5 /* Debug */,
+				5CA6588A2F6F840600BBBEA5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5CA6588B2F6F840600BBBEA5 /* Build configuration list for PBXNativeTarget "vilsay" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5CA6588C2F6F840600BBBEA5 /* Debug */,
+				5CA6588D2F6F840600BBBEA5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5CA6588E2F6F840600BBBEA5 /* Build configuration list for PBXNativeTarget "vilsayTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5CA6588F2F6F840600BBBEA5 /* Debug */,
+				5CA658902F6F840600BBBEA5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5CA658912F6F840600BBBEA5 /* Build configuration list for PBXNativeTarget "vilsayUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5CA658922F6F840600BBBEA5 /* Debug */,
+				5CA658932F6F840600BBBEA5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1B2C3D42E1F100000000113 /* Build configuration list for PBXNativeTarget "HotkeyMonitor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1B2C3D42E1F100000000114 /* Debug */,
+				A1B2C3D42E1F100000000115 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		5CA659002F6F840400BBBEA5 /* XCRemoteSwiftPackageReference "WhisperKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/argmaxinc/WhisperKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.0;
+			};
+		};
+		5CA659012F6F840400BBBEA5 /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/groue/GRDB.swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.0.0;
+			};
+		};
+		5CA659032F6F840400BBBEA5 /* XCRemoteSwiftPackageReference "LaunchAtLogin-modern" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/LaunchAtLogin-modern.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		5CA659102F6F840400BBBEA5 /* WhisperKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5CA659002F6F840400BBBEA5 /* XCRemoteSwiftPackageReference "WhisperKit" */;
+			productName = WhisperKit;
+		};
+		5CA659112F6F840400BBBEA5 /* GRDB */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5CA659012F6F840400BBBEA5 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
+			productName = GRDB;
+		};
+		5CA659132F6F840400BBBEA5 /* LaunchAtLogin */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5CA659032F6F840400BBBEA5 /* XCRemoteSwiftPackageReference "LaunchAtLogin-modern" */;
+			productName = LaunchAtLogin;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 5CA658622F6F840400BBBEA5 /* Project object */;
+}
