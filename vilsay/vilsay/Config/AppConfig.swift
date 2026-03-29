@@ -123,7 +123,7 @@ enum AppConfig {
         #if BYOK_ONLY || DEBUG
         return dashscopeDirectURL
         #else
-        return URL(string: "https://api.vilsay.com/api/v1/polish")!
+        return URL(string: "https://vilsay-api.vilhil.cn/api/v1/polish")!
         #endif
     }
 
@@ -174,13 +174,19 @@ enum AppConfig {
         envOrDefaults("VILSAY_FILE_ASR_MODEL", key: "vilsay.file_asr_model") ?? "qwen-audio-asr"
     }
 
-    /// 账号后端基址。仅填协议 + 主机（+ 端口）。
+    /// 账号后端基址（vilsay-api.vilhil.cn）。环境变量或 UserDefaults 可覆盖。
+    /// 域名规划：vilsay.com = 官网，vilsay-api.vilhil.cn = Vilsay API，api.vilhil.cn 预留给 VilHil。
     static var backendAPIBaseURL: URL? {
-        guard let raw = envOrDefaults("VILSAY_API_BASE", key: "vilsay.api_base") else { return nil }
-        var s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        while s.hasSuffix("/") { s.removeLast() }
-        guard !s.isEmpty else { return nil }
-        return URL(string: s)
+        if let raw = envOrDefaults("VILSAY_API_BASE", key: "vilsay.api_base") {
+            var s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            while s.hasSuffix("/") { s.removeLast() }
+            if !s.isEmpty { return URL(string: s) }
+        }
+        #if BYOK_ONLY
+        return nil
+        #else
+        return URL(string: "https://vilsay-api.vilhil.cn/api/v1")
+        #endif
     }
 
     /// Paraformer 录音文件公网联调 URL（经后端上传 OSS 等）。
