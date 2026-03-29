@@ -1,0 +1,21 @@
+# Xcode
+.derivedData/
+build/
+*.xcuserdata
+xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# macOS
+.DS_Store
+*.swp
+*~
+
+# Dependencies
+.build/
+
+# Secrets
+.env
+*.env.local
+
+# Misc
+*.log
