@@ -269,6 +269,43 @@ enum DashScopeASRClient {
         }
     }
 
+    /// 登录用户无自备 Key 时，上传音频到后端代理，后端用服务端 Key 调 qwen-audio-asr。
+    static func transcribeViaQwenAudioProxy(_ localFileURL: URL) async -> String? {
+        guard let baseURL = AppConfig.backendAPIBaseURL else { return nil }
+        guard let token = KeychainTokenStore.loadToken(), !token.isEmpty else { return nil }
+        guard FileManager.default.fileExists(atPath: localFileURL.path) else { return nil }
+
+        let fileData: Data
+        do { fileData = try Data(contentsOf: localFileURL) } catch { return nil }
+
+        let boundary = "Boundary-\(UUID().uuidString)"
+        let fileName = localFileURL.lastPathComponent
+        var body = Data()
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(fileName)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: application/octet-stream\r\n\r\n".data(using: .utf8)!)
+        body.append(fileData)
+        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+
+        guard let url = URL(string: "/api/v1/asr/qwen-audio", relativeTo: baseURL) else { return nil }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        req.httpBody = body
+        req.timeoutInterval = 60
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: req)
+            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else { return nil }
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let text = json["text"] as? String, !text.isEmpty else { return nil }
+            return text.trimmingCharacters(in: .whitespacesAndNewlines)
+        } catch {
+            return nil
+        }
+    }
+
     private enum DashScopeError: Error {
         case badResponse
         case parseFailed

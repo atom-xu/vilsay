@@ -180,17 +180,28 @@ final class SubscriptionManager: ObservableObject {
 
     // MARK: - Backend Sync
 
-    /// 将本地 StoreKit 订阅状态同步到后端（更新 `plan` 字段）。
+    /// 将本地 StoreKit 订阅状态同步到后端（更新 `plan` + 到期时间）。
     private func syncPlanWithBackend(isPro: Bool) async {
         guard let token = KeychainTokenStore.loadToken(), !token.isEmpty else { return }
         guard let baseURL = AppConfig.backendAPIBaseURL else { return }
         guard let url = URL(string: "\(baseURL)/api/v1/subscription/sync") else { return }
 
+        var body: [String: Any] = ["plan": isPro ? "pro" : "free"]
+
+        // 携带 StoreKit transaction 详情
+        if isPro, let tx = currentEntitlement {
+            body["original_transaction_id"] = String(tx.originalID)
+            body["product_id"] = tx.productID
+            if let exp = tx.expirationDate {
+                body["expires_date_ms"] = Int(exp.timeIntervalSince1970 * 1000)
+            }
+        }
+
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = try? JSONSerialization.data(withJSONObject: ["plan": isPro ? "pro" : "free"])
+        req.httpBody = try? JSONSerialization.data(withJSONObject: body)
         req.timeoutInterval = 10
 
         do {
@@ -198,7 +209,6 @@ final class SubscriptionManager: ObservableObject {
             let code = (response as? HTTPURLResponse)?.statusCode ?? -1
             if (200...299).contains(code) {
                 Self.log.info("✅ 后端 plan 同步成功: \(isPro ? "pro" : "free")")
-                // 刷新 AuthService 的 plan
                 await AuthService.shared.refreshUsage()
             } else {
                 Self.log.warning("⚠️ 后端 plan 同步 HTTP \(code)")

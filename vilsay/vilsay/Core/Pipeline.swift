@@ -574,6 +574,10 @@ final class Pipeline {
                !viaQwen.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 raw = viaQwen
                 logAsrProvider = "qwenAudio"
+            } else if let viaQwenProxy = await DashScopeASRClient.transcribeViaQwenAudioProxy(fileURL),
+               !viaQwenProxy.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                raw = viaQwenProxy
+                logAsrProvider = "qwenAudioProxy"
             } else if let viaProxy = await DashScopeASRClient.transcribeViaProxyIfConfigured(fileURL),
                !viaProxy.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 raw = viaProxy
@@ -853,6 +857,7 @@ final class Pipeline {
         var firstTokenTimeMs: Double?
 
         let polishUsageGate = PolishUsageOnceGate()
+        let inputCharCount = asrText.count
         func recordPolishUsageFromGateIfFirst() {
             guard polishUsageGate.tryConsume() else { return }
             // 记录首字延迟
@@ -860,11 +865,12 @@ final class Pipeline {
             let asrMsInt = max(0, Int(min(asrMs, Double(Int.max))))
             let provider = usageAsrProvider
                 ?? (AppState.shared.recognitionMode == .cloud ? "dashscope_cloud" : "whisper_local")
-            Self.log.info("Pipeline 用量上报 ASR 来源: \(provider)")
+            Self.log.info("Pipeline 用量上报 ASR 来源: \(provider), 字数: \(inputCharCount)")
             Task { @MainActor in
                 await AuthService.shared.recordUsageAfterFirstPolishToken(
                     durationMs: asrMsInt,
-                    asrProvider: provider
+                    asrProvider: provider,
+                    charCount: inputCharCount
                 )
             }
         }

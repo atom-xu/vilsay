@@ -58,6 +58,7 @@ struct UsageRecordAPIRequest: Encodable {
     let durationMs: Int
     let asrProvider: String
     let clientVersion: String
+    let charCount: Int
 }
 
 struct UsageRecordAPIResponse: Decodable {
@@ -252,7 +253,8 @@ final class AuthService: ObservableObject {
     func recordUsageAfterFirstPolishToken(
         type: String = "polish",
         durationMs: Int,
-        asrProvider: String
+        asrProvider: String,
+        charCount: Int = 0
     ) async {
         guard isAuthenticated,
               hasBackendConfigured,
@@ -264,7 +266,8 @@ final class AuthService: ObservableObject {
             type: type,
             durationMs: durationMs,
             asrProvider: asrProvider,
-            clientVersion: ver
+            clientVersion: ver,
+            charCount: charCount
         )
         do {
             let res: UsageRecordAPIResponse = try await BackendAPIClient.postJSON(path: "/usage/record", body: body, token: token)
