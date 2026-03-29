@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		5C36931C2F6F9664004AE5E3 /* CLEANUP_REPORT.md in Resources */ = {isa = PBXBuildFile; fileRef = 5C36931B2F6F9664004AE5E3 /* CLEANUP_REPORT.md */; };
+
 		5CA658942F6F851600BBBEA5 /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5CA659102F6F840400BBBEA5 /* WhisperKit */; };
 		5CA658952F6F851600BBBEA5 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 5CA659112F6F840400BBBEA5 /* GRDB */; };
 		5CA658972F6F851600BBBEA5 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = 5CA659132F6F840400BBBEA5 /* LaunchAtLogin */; };
@@ -56,7 +56,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		5C36931B2F6F9664004AE5E3 /* CLEANUP_REPORT.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLEANUP_REPORT.md; sourceTree = "<group>"; };
+
 		5CA6586A2F6F840400BBBEA5 /* vilsay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = vilsay.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5CA658772F6F840600BBBEA5 /* vilsayTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = vilsayTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5CA658812F6F840600BBBEA5 /* vilsayUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = vilsayUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -130,7 +130,7 @@
 				5CA6587A2F6F840600BBBEA5 /* vilsayTests */,
 				5CA658842F6F840600BBBEA5 /* vilsayUITests */,
 				5CA6586B2F6F840400BBBEA5 /* Products */,
-				5C36931B2F6F9664004AE5E3 /* CLEANUP_REPORT.md */,
+
 				5CA813EF2F7660220040755D /* Frameworks */,
 			);
 			sourceTree = "<group>";
@@ -318,7 +318,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5C36931C2F6F9664004AE5E3 /* CLEANUP_REPORT.md in Resources */,
+
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
