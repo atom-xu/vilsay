@@ -182,7 +182,7 @@ enum AppConfig {
             while s.hasSuffix("/") { s.removeLast() }
             if !s.isEmpty { return URL(string: s) }
         }
-        return URL(string: "https://vilsay-api.vilhil.cn/api/v1")
+        return URL(string: "https://vilsay-api.vilhil.cn")
     }
 
     /// Paraformer 录音文件公网联调 URL（经后端上传 OSS 等）。
