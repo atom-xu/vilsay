@@ -1,6 +1,7 @@
 # Xcode / SPM
-vilsay/.derivedData/
-vilsay/build.log
+**/.derivedData/
+**/build.log
+*.db
 **/*.xcuserstate
 **/xcuserdata/
 
@@ -16,10 +17,13 @@ Secrets.xcconfig
 API_KEYS_AND_SECRETS.md
 docs/status/API_KEYS_AND_SECRETS.md
 
-# Website
-website/node_modules/
-website/.next/
-website/out/
+# 私有部分（单独仓库管理，不入开源库）
+website/
+server/
+
+# 本地临时文件
+vilsay_raw_logs_export.csv
+sync-byok.sh
 
 # Xcode DerivedData（标准路径）
 vilsay/vilsay.xcodeproj/project.xcworkspace/xcuserdata/
