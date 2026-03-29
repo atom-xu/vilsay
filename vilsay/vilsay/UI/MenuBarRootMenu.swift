@@ -133,17 +133,10 @@ struct MenuBarRootMenu: View {
         Button {
             openMainWindow(nav: .dictionary)
         } label: {
-            HStack {
-                Text("词典")
-                Spacer()
-                if state.dictionaryBadgeCount > 0 {
-                    Text("\(state.dictionaryBadgeCount)")
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Capsule().fill(VColor.fail.opacity(0.9)))
-                        .foregroundStyle(.white)
-                        .font(.caption.weight(.semibold))
-                }
+            if state.dictionaryBadgeCount > 0 {
+                Label("词典（\(state.dictionaryBadgeCount)）", systemImage: "text.book.closed")
+            } else {
+                Label("词典", systemImage: "text.book.closed")
             }
         }
 

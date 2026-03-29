@@ -3,9 +3,11 @@
 //
 
 import Foundation
+import os.log
 
 /// 百炼可用模型 ID：优先请求云端列表，失败则用静态兜底。
 enum DashScopeModelCatalog {
+    private static let log = Logger(subsystem: "com.vilsay.app", category: "ModelCatalog")
     static let defaultAsrModels = ["paraformer-v2", "paraformer-v1", "paraformer-realtime-v2"]
     static let defaultTextModels = ["qwen-turbo", "qwen-plus", "qwen-max", "qwen-long", "qwen2.5-72b-instruct"]
 
@@ -26,19 +28,19 @@ enum DashScopeModelCatalog {
                 let (data, response) = try await URLSession.shared.data(for: req)
                 let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
                 guard (200 ... 299).contains(statusCode) else {
-                    print("[ModelCatalog] HTTP \(statusCode) on page \(page), breaking")
+                    log.warning("HTTP \(statusCode) on page \(page), breaking")
                     break
                 }
                 guard let batch = parseModelListJSON(data), !batch.isEmpty else {
                     let preview = String(data: data.prefix(200), encoding: .utf8) ?? "<non-utf8>"
-                    print("[ModelCatalog] parseModelListJSON returned nil/empty on page \(page): \(preview)")
+                    log.warning("parseModelListJSON returned nil/empty on page \(page): \(preview)")
                     break
                 }
                 collected.append(contentsOf: batch)
                 if batch.count < pageSize { break }
                 page += 1
             } catch {
-                print("[ModelCatalog] URLSession error on page \(page): \(error)")
+                log.error("URLSession error on page \(page): \(error.localizedDescription)")
                 break
             }
         }

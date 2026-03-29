@@ -4,7 +4,7 @@ const sections = [
   { id: "start",   title: "快速开始" },
   { id: "hotkey",  title: "热键与录音" },
   { id: "polish",  title: "AI 润色" },
-  { id: "ai3",     title: "个性化学习（AI3）" },
+  { id: "insight",  title: "洞察引擎" },
   { id: "dict",    title: "自定义词典" },
   { id: "byok",    title: "自带 API Key" },
   { id: "privacy", title: "隐私与权限" },
@@ -61,9 +61,9 @@ export default function DocsPage() {
             <li>根据目标应用（邮件/聊天/文档）自动调整语气</li>
           </ul>
 
-          <h2 id="ai3" className="mt-10 text-xl font-bold text-vilsay-text-primary">个性化学习（AI3）</h2>
+          <h2 id="insight" className="mt-10 text-xl font-bold text-vilsay-text-primary">洞察引擎</h2>
           <ul className="mt-3 space-y-2 text-sm text-vilsay-text-secondary pl-5 list-disc">
-            <li>AI3 在后台分析你的语音模式，持续优化润色质量</li>
+            <li>洞察引擎在后台分析你的语音模式，持续优化润色质量</li>
             <li>自动识别高频口头禅和专业术语</li>
             <li>学习数据仅存储在本地，不上传</li>
             <li>可在设置 → 数据中查看或清除学习记录</li>
@@ -72,7 +72,7 @@ export default function DocsPage() {
           <h2 id="dict" className="mt-10 text-xl font-bold text-vilsay-text-primary">自定义词典</h2>
           <ul className="mt-3 space-y-2 text-sm text-vilsay-text-secondary pl-5 list-disc">
             <li>手动添加专有名词、品牌名、人名，确保准确识别</li>
-            <li>AI3 会主动推荐词条，一键确认加入词典</li>
+            <li>洞察引擎会主动推荐词条，一键确认加入词典</li>
             <li>Free 版最多 20 条；Pro 版无限</li>
           </ul>
 

@@ -128,8 +128,15 @@ struct OnboardingView: View {
                 )
                 navStep(
                     number: 3,
-                    title: "准备就绪",
+                    title: "体验润色",
                     done: step >= 5,
+                    subSteps: [],
+                    showSubs: false
+                )
+                navStep(
+                    number: 4,
+                    title: "准备就绪",
+                    done: step >= 6,
                     subSteps: [],
                     showSubs: false
                 )
@@ -154,7 +161,8 @@ struct OnboardingView: View {
             switch number {
             case 1: return step >= 1 && step < 3
             case 2: return step == 3
-            case 3: return step >= 4
+            case 3: return step == 4
+            case 4: return step >= 5
             default: return false
             }
         }()
@@ -218,7 +226,7 @@ struct OnboardingView: View {
     private var mainContentPanel: some View {
         ZStack(alignment: .topTrailing) {
             // 跳过按钮（步骤 1-3 可跳过）
-            if step > 0 && step < 4 {
+            if step > 0 && step < 5 {
                 Button("跳过") { advanceTo(step + 1) }
                     .buttonStyle(.plain)
                     .foregroundStyle(.secondary)
@@ -236,6 +244,7 @@ struct OnboardingView: View {
                     case 1: micContent
                     case 2: axContent
                     case 3: loginContent
+                    case 4: trialContent
                     default: completionContent
                     }
                 }
@@ -407,7 +416,7 @@ struct OnboardingView: View {
             VStack(spacing: 10) {
                 Text("登录以开始使用")
                     .font(.largeTitle.weight(.bold))
-                Text("登录后可同步个性化设置、使用云端润色。")
+                Text("登录后可同步设置、查看用量。升级 Pro 可享受 Vilsay 提供的云端服务。")
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -437,7 +446,7 @@ struct OnboardingView: View {
                 .buttonStyle(.plain)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-                .help("跳过后可使用本地 WhisperKit；云端润色与账号同步需登录")
+                .help("跳过后需在设置中自行填写 DashScope API Key 以使用云端润色")
 
             HStack {
                 Button("上一步") { advanceTo(2) }
@@ -492,6 +501,33 @@ struct OnboardingView: View {
                 )
                 .frame(height: 120)
 
+            // Pro/Free 云端服务说明
+            if auth.isAuthenticated && auth.isPro {
+                Label("Pro 会员：云端服务已就绪", systemImage: "checkmark.seal.fill")
+                    .font(.callout.weight(.medium))
+                    .foregroundStyle(VColor.accent)
+            } else if !auth.isAuthenticated {
+                VStack(spacing: 6) {
+                    Label("未登录：云端润色需要 API Key", systemImage: "key")
+                        .font(.callout.weight(.medium))
+                        .foregroundStyle(VColor.warn)
+                    Text("请在「设置 → 语音识别」中填写 DashScope API Key，或登录后升级 Pro 由 Vilsay 提供服务。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+            } else if !auth.isPro {
+                VStack(spacing: 6) {
+                    Label("免费版：云端润色需要 API Key", systemImage: "key")
+                        .font(.callout.weight(.medium))
+                        .foregroundStyle(VColor.warn)
+                    Text("请在「设置 → 语音识别」中填写 DashScope API Key，或升级 Pro 由 Vilsay 提供服务。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+            }
+
             if appState.localWhisperLoading {
                 HStack(spacing: VSpacing.sm) {
                     ProgressView().controlSize(.small)
@@ -503,11 +539,87 @@ struct OnboardingView: View {
 
             Button("开始使用") {
                 UserDefaults.standard.set(true, forKey: UserDefaultsKeys.onboardingDone)
-                UserDefaults.standard.set(4, forKey: UserDefaultsKeys.onboardingStep)
+                UserDefaults.standard.set(5, forKey: UserDefaultsKeys.onboardingStep)
                 onFinished()
             }
             .buttonStyle(OnboardingPrimaryButton())
             .keyboardShortcut(.defaultAction)
+        }
+    }
+
+    // 步骤 4 体验润色
+    private var trialContent: some View {
+        VStack(spacing: 28) {
+            Image(systemName: "wand.and.stars")
+                .font(.system(size: 48, weight: .light))
+                .foregroundStyle(VColor.accent)
+
+            VStack(spacing: 10) {
+                Text("体验 AI 润色")
+                    .font(.largeTitle.weight(.bold))
+                Text("Vilsay 将口语化的语音转化为精准流畅的文字。")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+
+            // 对比示意卡片
+            VStack(spacing: 0) {
+                HStack {
+                    Label("说出来", systemImage: "mic.fill")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(Color.primary.opacity(0.03))
+
+                Text("\"然后就是那个方案嘛，我觉得可能还不太成熟吧\"")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Divider()
+
+                HStack {
+                    Label("润色后", systemImage: "wand.and.stars")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(VColor.accent)
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(VColor.accent.opacity(0.05))
+
+                Text("\"这个方案目前还不够成熟，需要进一步完善。\"")
+                    .font(.callout.weight(.medium))
+                    .foregroundStyle(.primary)
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: VRadius.lg, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: VRadius.lg, style: .continuous)
+                    .stroke(Color.primary.opacity(0.07), lineWidth: 1)
+            )
+
+            Button("开始使用，自己试试") { advanceTo(5) }
+                .buttonStyle(OnboardingPrimaryButton())
+                .keyboardShortcut(.defaultAction)
+
+            HStack {
+                Button("上一步") { advanceTo(3) }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+                    .font(.subheadline)
+                Spacer()
+                Button("跳过") { advanceTo(5) }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+                    .font(.subheadline)
+            }
         }
     }
 
@@ -522,6 +634,10 @@ struct OnboardingView: View {
             Image(systemName: "mic.slash.fill")
                 .font(.system(size: 48, weight: .light))
                 .foregroundStyle(VColor.fail)
+        case .granted:
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 48, weight: .light))
+                .foregroundStyle(VColor.ok)
         }
     }
 
@@ -531,13 +647,14 @@ struct OnboardingView: View {
         case .requesting: return "正在请求麦克风权限…"
         case .denied: return "请前往「系统设置 → 隐私与安全性 → 麦克风」中允许 Vilsay。"
         case .waitingSettings: return "开启后此页面将自动继续。"
+        case .granted: return "麦克风已就绪，即将进入下一步。"
         }
     }
 
     @ViewBuilder
     private var micButtons: some View {
         switch micState {
-        case .initial, .requesting:
+        case .initial, .requesting, .granted:
             EmptyView()
         case .denied:
             Button("打开系统设置") {
@@ -672,7 +789,8 @@ struct OnboardingView: View {
                 await AuthService.shared.restoreSession()
                 if AuthService.shared.isAuthenticated { advanceTo(4) }
             }
-        case 4:
+        case 4: break  // 体验润色步骤，无需预加载
+        case 5:
             Task { await WhisperASRFallback.shared.preloadIfNeeded() }
         default: break
         }
@@ -682,7 +800,8 @@ struct OnboardingView: View {
         let status = AVAudioApplication.shared.recordPermission
         switch status {
         case .granted:
-            micState = .initial; advanceTo(2)
+            micState = .granted
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { self.advanceTo(2) }
         case .undetermined:
             guard !micAuthorizationInFlight else { return }
             micAuthorizationInFlight = true
@@ -691,7 +810,11 @@ struct OnboardingView: View {
                 let ok = await PermissionManager.shared.requestMicrophonePermission()
                 await MainActor.run {
                     micAuthorizationInFlight = false
-                    if ok { invalidateMicTimer(); advanceTo(2) }
+                    if ok {
+                        invalidateMicTimer()
+                        micState = .granted
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { self.advanceTo(2) }
+                    }
                     else  { micState = .denied }
                 }
             }
@@ -706,7 +829,9 @@ struct OnboardingView: View {
             Task { @MainActor in
                 self.micPollElapsed += 2
                 if AVAudioApplication.shared.recordPermission == .granted {
-                    self.invalidateMicTimer(); self.advanceTo(2)
+                    self.invalidateMicTimer()
+                    self.micState = .granted
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { self.advanceTo(2) }
                 }
             }
         }
@@ -741,6 +866,12 @@ struct OnboardingView: View {
 
     private func axToAuthorizedAndAdvance() {
         axState = .authorized
+        // UX Fix #2：授权辅助功能后重启 HotkeyManager，使 Fn 热键立即可用，无需手动重启 app
+        Task { @MainActor in
+            HotkeyManager.shared.stop()
+            try? await Task.sleep(for: .milliseconds(300))
+            HotkeyManager.shared.start()
+        }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { advanceTo(3) }
     }
 
@@ -761,7 +892,7 @@ struct OnboardingView: View {
 // MARK: - 枚举（权限状态）
 
 private enum MicPermState {
-    case initial, requesting, denied, waitingSettings
+    case initial, requesting, denied, waitingSettings, granted
 }
 
 private enum AXPermState {

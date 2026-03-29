@@ -30,6 +30,7 @@ class UsageCurrentResponse(BaseModel):
     used: int
     quota: int
     year_month: str
+    plan: str = "free"
 
 
 class MessageResponse(BaseModel):

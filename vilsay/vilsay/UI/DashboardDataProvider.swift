@@ -21,6 +21,10 @@ final class DashboardDataProvider: ObservableObject {
     @Published var timeSavedMs: Int = 0
     @Published var avgWordsPerMinute: Double = 0
 
+    // 个性化适应度
+    @Published var personalizationScore: Int = 0
+    @Published var archetype: SpeechArchetype?
+
     private let repo = RawLogRepository()
     private var cancellable: AnyCancellable?
 
@@ -48,5 +52,40 @@ final class DashboardDataProvider: ObservableObject {
         timeSavedMs = cumulative.timeSavedMs
         avgWordsPerMinute = cumulative.avgWordsPerMinute
 
+        // 个性化适应度：基于 AI3 画像维度
+        personalizationScore = await computePersonalization()
+    }
+
+    private func computePersonalization() async -> Int {
+        guard let pool = try? AppDatabase.shared.dbPool else { return 0 }
+        let result: (Int, SpeechArchetype?) = (try? await pool.read { db -> (Int, SpeechArchetype?) in
+            var score = 0
+            let keys = try String.fetchAll(db, sql: "SELECT key FROM user_profile WHERE output_mode = '__global__'")
+            if keys.contains("habitual_words") { score += 25 }
+            if keys.contains("thinking_style") { score += 25 }
+            if keys.contains("tone") { score += 25 }
+            let dictCount = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM dictionary") ?? 0
+            if dictCount > 0 { score += 15 }
+            if keys.contains("correction_gaps") { score += 10 }
+
+            // 读取人格类型
+            var arch: SpeechArchetype?
+            if let row = try UserProfileRecord
+                .filter(Column("key") == "ai3_dimensions" && Column("output_mode") == "__global__")
+                .fetchOne(db),
+               let jsonData = row.value.data(using: .utf8),
+               let obj = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
+                let dims = StyleDimensions(
+                    warmth: obj["warmth"] as? Double ?? 0.5,
+                    directness: obj["directness"] as? Double ?? 0.5,
+                    confidence: obj["confidence"] as? Double ?? 0,
+                    sampleCount: obj["sample_count"] as? Int ?? 0
+                )
+                arch = dims.archetype
+            }
+            return (min(100, score), arch)
+        }) ?? (0, nil)
+        await MainActor.run { archetype = result.1 }
+        return result.0
     }
 }

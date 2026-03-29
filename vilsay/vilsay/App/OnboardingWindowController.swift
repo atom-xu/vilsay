@@ -38,5 +38,17 @@ final class OnboardingWindowController {
     func close() {
         window?.close()
         window = nil
+
+        // UX Fix #1：Onboarding 完成后显示主窗口
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            for w in NSApp.windows {
+                if (w.identifier?.rawValue == "main" || w.title == "Vilsay"),
+                   w.title != "欢迎使用 Vilsay" {
+                    w.makeKeyAndOrderFront(nil)
+                    NSApp.activate(ignoringOtherApps: true)
+                    break
+                }
+            }
+        }
     }
 }

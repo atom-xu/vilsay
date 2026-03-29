@@ -1,6 +1,6 @@
 # VILSAY · 技术架构文档
 # Tech Architecture Document
-# 版本：1.4 | 日期：2026-03-25
+# 版本：1.5 | 日期：2026-03-29
 # 上游文档：VILSAY_PRD.md
 # 关联：每周微架构门禁见 `docs/status/WEEKLY_MICRO_ARCH_PROCESS.md`；预检排障见 `docs/status/PREFLIGHT_AND_TROUBLESHOOTING.md`；**热键专项架构**见同目录 **`HOTKEY_ARCHITECTURE.md`**
 
@@ -15,14 +15,27 @@
 | 语言 | Swift 5.9+ | - | 原生性能、iOS 复用 |
 | UI 框架 | SwiftUI | - | Apple 官方、现代声明式 |
 | 最低系统 | macOS 14 Sonoma | - | WhisperKit 要求 |
-| 本地 ASR | WhisperKit | MIT ✅ | Apple 官方推荐、可商用 |
-| 云端 ASR | 阿里云 DashScope | - | 中文最准、国内合规 |
-| LLM 润色 | 阿里云 Qwen | - | 国内合规、和 ASR 同账号 |
-| AI3 分析 | 阿里云 Qwen | - | 内置，用开发者 Key |
+| 本地 ASR（fallback） | WhisperKit | MIT ✅ | Apple 官方推荐、可商用；断网降级 |
+| 文件 ASR（primary） | qwen-audio-asr（DashScope） | - | LLM 端到端多模态，base64 同步上传，中文最准 |
+| 流式 ASR | paraformer-realtime-v2（DashScope） | - | WebSocket 实时流式，低延迟 |
+| LLM 润色 | qwen-flash（DashScope） | - | 国内合规、低延迟 |
+| LLM 审阅 | qwen-plus（DashScope） | - | Review 质量更高 |
+| AI3 分析 | qwen-plus（DashScope） | - | 内置，用开发者 Key |
 | 本地数据库 | GRDB.swift | MIT ✅ | Swift 最佳 SQLite 库 |
 | 全局热键（Phase 1～3） | **CGEventTap** | Apple | **右 Option（0x3D）、FN/🌐（0x3F + function 位）**；需**辅助功能**；与 `HotkeyManager` 绑定；**已移除**早期任务书中的 KeyboardShortcuts 依赖 |
 | 开机自启 | LaunchAtLogin | MIT ✅ | macOS 标准方案 |
 | 依赖管理 | Swift Package Manager | - | Xcode 原生，无需 CocoaPods |
+
+### 1.1.1 DashScope 模型清单
+
+| 功能 | 模型 | 调用方式 | 说明 |
+|------|------|----------|------|
+| 文件 ASR（primary） | qwen-audio-asr | multimodal generation，同步 base64 上传 | LLM 端到端，中文最准 |
+| 流式 ASR | paraformer-realtime-v2 | WebSocket 实时流式 | 低延迟实时转写 |
+| 润色（AI2 polish） | qwen-flash | SSE 流式 | 低延迟、成本低 |
+| 审阅（AI2 review） | qwen-plus | SSE 流式 | 质量更高 |
+| AI3 画像分析 | qwen-plus | 普通请求 | Social Style Model 分析 |
+| 本地 ASR（fallback） | WhisperKit (openai_whisper-base) | 本地 CoreML | 断网降级 |
 
 ### 1.2 后端服务器
 
@@ -81,8 +94,9 @@
 │              Core Pipeline 主链路（同步）               │
 │                                                       │
 │  AudioCapture → ASR → VADBuffer → PromptComposer     │
-│  AVAudioEngine  Paraformer REST                → PolishService │
-│                WhisperKit（本地 caf）             Qwen SSE │
+│  AVAudioEngine  qwen-audio-asr（primary）       → PolishService │
+│                Paraformer REST async（Proxy）     qwen-flash SSE │
+│                WhisperKit local（fallback）       qwen-plus Review │
 │                ↓ confidence                           │
 │  ASR 输出含置信度(avgLogprob) → 低置信区域标注 → AI2   │
 │                                                       │
@@ -94,7 +108,13 @@
 │           AI3 暗线（完全异步 + 闭环反馈）              │
 │                                                       │
 │  RawLogger → AnalyzerTrigger → AI3Analyzer            │
-│  写入raw_log  计数满20条触发    Qwen分析画像           │
+│  写入raw_log  计数满20条触发    qwen-plus分析画像      │
+│                                Social Style Model     │
+│                                StyleDimensions:       │
+│                                  warmth/directness 双轴│
+│                                  4 archetypes:        │
+│                                  executor/inspirer/   │
+│                                  analyst/narrator     │
 │  +asr_confidence               ↓                     │
 │  +user_flagged     →      ProfileService              │
 │  +target_app_id              写入user_profile          │
@@ -169,8 +189,8 @@ vilsay/
 │   ├── Core/
 │   │   ├── Pipeline.swift
 │   │   ├── VADBuffer.swift          # 整段 ASR 后经此再润色；800ms 文本 VAD 待流式 ASR
-│   │   ├── DashScopeASRClient.swift # Paraformer 异步 REST（公网 URL 任务）
-│   │   ├── WhisperASRFallback.swift # WhisperKit 本地转写
+│   │   ├── DashScopeASRClient.swift # qwen-audio-asr（primary）+ Paraformer REST async（Proxy）
+│   │   ├── WhisperASRFallback.swift # WhisperKit 本地转写（fallback）
 │   │   ├── WhisperModelLocator.swift # 可选包内 CoreML 目录
 │   │   ├── PolishService.swift
 │   │   ├── SelectSpeakService.swift
@@ -380,9 +400,12 @@ DELETE /user/account           注销账号
 // AI1 — ASR 输出结构
 struct ASRResult {
     let text: String
-    let confidence: Double      // WhisperKit: avgLogprob → 归一化 0~1；Paraformer: 整段置信度
-    let provider: ASRProvider   // .whisperKit / .dashScope
+    let confidence: Double      // WhisperKit: avgLogprob → 归一化 0~1；qwen-audio-asr/Paraformer: 整段置信度
+    let provider: ASRProvider   // .whisperKit / .qwenAudioASR / .paraformer
 }
+// ASR 优先级链：qwen-audio-asr (LLM端到端, base64同步) → Proxy → Paraformer REST async → WhisperKit local fallback
+// 文件 ASR 模型：qwen-audio-asr（multimodal generation endpoint，同步 base64 上传）
+// 流式 ASR 模型：paraformer-realtime-v2（WebSocket）
 
 protocol ASRService {
     func startStream() async throws -> AsyncStream<String>
@@ -453,7 +476,7 @@ raw_log:                     // 原始语料，只追加
   id: Int64 (PK)
   raw_text: String           // ASR 原始输出
   polished_text: String      // 润色结果
-  asr_provider: String       // "whisperKit" / "dashScope"
+  asr_provider: String       // "whisperKit" / "qwenAudioASR" / "paraformer"
   asr_confidence: Double?    // ★ 新增：ASR 置信度（0~1）
   target_app_id: String?     // ★ 新增：目标 App bundleIdentifier
   user_flagged_error: Bool   // ★ 新增：用户标记"有误"（闭环反馈）
@@ -594,7 +617,7 @@ enum Constants {
 | 改词时 AXUIElement 读取失败 | 中 | 降级为普通输入模式 | — |
 | 微信登录审核周期长 | 高 | 先上线其他3种，微信后补 | — |
 | VAD 误判停顿 | 中 | 800ms 可在设置调整；当前主断句边界多为**松键** | — |
-| ASR 断网 / 本地录音路径 | 中 | 麦克风录音走 **WhisperKit**；Paraformer 需公网 URL | — |
+| ASR 断网 / 本地录音路径 | 中 | 优先级链：qwen-audio-asr → Proxy → Paraformer REST → WhisperKit 本地 fallback | — |
 | **辅助功能未授权** | **高** | Onboarding 引导 + `AppState.hotkeyAccessibilityRequired` | — |
 | 沙盒下首次拉取 Whisper 模型 | 中 | 需 `network.client`；或 Bundle 嵌入 | — |
 | AXUIElement 权限被拒 | 高 | Onboarding 明确引导 | — |

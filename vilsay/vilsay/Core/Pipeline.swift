@@ -67,8 +67,8 @@ final class Pipeline {
         guard !isStartingRecording else { return }
         guard AppState.shared.status != .processing else { return }
 
-        if AuthService.shared.isAuthenticated && AuthService.shared.isQuotaExceeded {
-            AppState.shared.lastPipelineError = "本月免费次数已用完，请升级继续使用。"
+        if AuthService.shared.isAuthenticated && !AuthService.shared.isPro && AuthService.shared.isQuotaExceeded {
+            AppState.shared.lastPipelineError = "本月免费次数已用完，请升级 Pro 继续使用。"
             AppState.shared.status = .attention
             return
         }
@@ -570,7 +570,11 @@ final class Pipeline {
         let raw: String
         if AppState.shared.recognitionMode == .cloud,
            NetworkMonitor.shared.isConnected {
-            if let viaProxy = await DashScopeASRClient.transcribeViaProxyIfConfigured(fileURL),
+            if let viaQwen = await DashScopeASRClient.transcribeViaQwenAudio(fileURL),
+               !viaQwen.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                raw = viaQwen
+                logAsrProvider = "qwenAudio"
+            } else if let viaProxy = await DashScopeASRClient.transcribeViaProxyIfConfigured(fileURL),
                !viaProxy.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 raw = viaProxy
                 logAsrProvider = "dashScope"
@@ -846,10 +850,13 @@ final class Pipeline {
         var receivedPolish = false
         var polishPending = ""
         var fullPolishForTrace = ""
+        var firstTokenTimeMs: Double?
 
         let polishUsageGate = PolishUsageOnceGate()
         func recordPolishUsageFromGateIfFirst() {
             guard polishUsageGate.tryConsume() else { return }
+            // 记录首字延迟
+            firstTokenTimeMs = (CFAbsoluteTimeGetCurrent() - polishPhaseStart) * 1000
             let asrMsInt = max(0, Int(min(asrMs, Double(Int.max))))
             let provider = usageAsrProvider
                 ?? (AppState.shared.recognitionMode == .cloud ? "dashscope_cloud" : "whisper_local")
@@ -864,6 +871,13 @@ final class Pipeline {
 
         if !AppConfig.canRunPolishWithCurrentCredentials {
             Self.log.warning("⚠️ 润色凭证不可用，输出将等同 ASR 原文")
+            // UX Fix #3：无凭证时立即提示用户，而非等润色超时后才反馈
+            #if BYOK_ONLY || DEBUG
+            AppState.shared.polishAttentionMessage = "润色不可用：请在「设置 → 语音识别」中填写 DashScope API Key。"
+            #else
+            AppState.shared.polishAttentionMessage = "润色不可用：请先登录账号，或在设置中填写 API Key。"
+            #endif
+            AppState.shared.status = .attention
         }
 
         for await chunk in PolishService.polishStreaming(
@@ -881,7 +895,7 @@ final class Pipeline {
             fullPolishForTrace.append(contentsOf: chunk)
             polishPending.append(contentsOf: chunk)
         }
-        // 流式接收完成后一次性注入，避免多次 CGEvent.post 异步竞争导致粘贴错误内容
+        // 流式接收完成后一次性注入
         if !polishPending.isEmpty {
             pasteTimed(polishPending)
         }
@@ -901,7 +915,7 @@ final class Pipeline {
         let polishWallMs = (CFAbsoluteTimeGetCurrent() - polishPhaseStart) * 1000
         let injectMs = injectAccumSec * 1000
         let polishMs = max(0, polishWallMs - injectMs)
-        PerformanceTracker.logPipeline(asrMs: asrMs, polishMs: polishMs, injectMs: injectMs)
+        PerformanceTracker.logPipeline(asrMs: asrMs, polishMs: polishMs, injectMs: injectMs, firstTokenMs: firstTokenTimeMs)
 
         if !fullPolishForTrace.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             RawLogger.logAsync(
@@ -924,6 +938,7 @@ final class Pipeline {
         AppState.shared.lastPipelinePolishWallMs = polishMs
         AppState.shared.lastPipelineInjectMs = injectMs
         AppState.shared.lastPipelineCompletedAt = Date()
+        NotificationCenter.default.post(name: .init("VilsayPipelineDidComplete"), object: nil)
         Self.log.info("📋 Week3 主链路输出已更新：设置 → 可查看「ASR 原文 / 润色输出」与耗时。")
 
         Task { @MainActor in

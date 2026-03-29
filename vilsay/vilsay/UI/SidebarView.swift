@@ -26,7 +26,7 @@ struct SidebarView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 2) {
-                    ForEach([MainNavItem.dashboard, .history, .dictionary], id: \.self) { item in
+                    ForEach([MainNavItem.dashboard, .history, .dictionary, .profile], id: \.self) { item in
                         sidebarNavRow(item)
                     }
                 }
@@ -133,8 +133,8 @@ struct SidebarView: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
 
-            // 底部图标栏（设置 + 版本）
-            HStack {
+            // 底部图标栏（设置 + 联系 + 官网 + 版本）
+            HStack(spacing: 12) {
                 Button {
                     selection = .settings
                 } label: {
@@ -144,6 +144,28 @@ struct SidebarView: View {
                 }
                 .buttonStyle(.plain)
                 .help("设置")
+
+                Button {
+                    if let url = URL(string: "mailto:shay1230xh@163.com?subject=Vilsay%20%E5%8F%8D%E9%A6%88") {
+                        NSWorkspace.shared.open(url)
+                    }
+                } label: {
+                    Image(systemName: "envelope")
+                        .font(.system(size: 14))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("联系我们：shay1230xh@163.com")
+
+                Button {
+                    NSWorkspace.shared.open(WebsiteURL.home)
+                } label: {
+                    Image(systemName: "safari")
+                        .font(.system(size: 14))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("进入官网")
 
                 Spacer()
 

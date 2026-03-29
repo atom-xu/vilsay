@@ -6,12 +6,14 @@
 import AppKit
 import GRDB
 import LaunchAtLogin
+import StoreKit
 import SwiftUI
 
 /// W2-06：设置页主内容（⌘, 打开的窗口内「设置」Tab）。
 struct SettingsRootView: View {
     @ObservedObject private var state = AppState.shared
     @ObservedObject private var auth = AuthService.shared
+    @ObservedObject private var subscription = SubscriptionManager.shared
     @StateObject private var micTestController = MicTestController()
     @State private var permissionRefreshTick = 0
 
@@ -68,7 +70,6 @@ struct SettingsRootView: View {
                 aboutSection
                 outputModeOverridesSection
                 diagnosticsSection
-                settingsFooterLinks
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(VSpacing.pageInset)
@@ -182,15 +183,32 @@ struct SettingsRootView: View {
                     }
                 }
 
+                #if !BYOK_ONLY
                 HStack {
                     Text("套餐")
                     Spacer()
-                    Text("免费版")
-                    Button("升级 Pro") {
-                        NSWorkspace.shared.open(WebsiteURL.pricing)
+                    if auth.isPro || subscription.isProEntitled {
+                        Text("Pro")
+                            .fontWeight(.medium)
+                            .foregroundStyle(VColor.accent)
+                    } else {
+                        Text("免费版")
+                        Button {
+                            Task { await subscription.purchase() }
+                        } label: {
+                            if subscription.isPurchasing {
+                                ProgressView().controlSize(.small)
+                            } else if let product = subscription.proProduct {
+                                Text("升级 Pro — \(product.displayPrice)/月")
+                            } else {
+                                Text("升级 Pro")
+                            }
+                        }
+                        .disabled(subscription.isPurchasing || subscription.proProduct == nil)
+                        .help("升级后由 Vilsay 提供云端服务，无需自备 API Key")
                     }
-                    .help("在浏览器中打开定价页（App 内购上线前也可从此了解套餐）")
                 }
+                #endif
 
                 if let err = auth.lastAuthError, !err.isEmpty {
                     Text(err)
@@ -198,6 +216,24 @@ struct SettingsRootView: View {
                         .foregroundStyle(VColor.warn)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+
+                #if !BYOK_ONLY
+                if let err = subscription.lastError {
+                    Text(err)
+                        .font(.caption)
+                        .foregroundStyle(VColor.warn)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                if !auth.isPro && !subscription.isProEntitled {
+                    Button("恢复购买") {
+                        Task { await subscription.restore() }
+                    }
+                    .font(.caption)
+                    .buttonStyle(.plain)
+                    .foregroundStyle(VColor.accent)
+                }
+                #endif
             }
         } label: {
             Label("账号", systemImage: "person.circle.fill")
@@ -226,39 +262,55 @@ struct SettingsRootView: View {
 
                 Divider()
 
-                VStack(alignment: .leading, spacing: VSpacing.xs) {
-                    HStack {
-                        Text("DashScope API Key")
-                            .font(.subheadline.weight(.medium))
-                        Spacer()
-                        apiKeyStatusBadge
-                    }
-                    HStack(spacing: VSpacing.sm) {
-                        SecureField("sk-…", text: $dashscopeKeyStored)
-                            .textFieldStyle(.roundedBorder)
-                        Button("验证连接") {
-                            Task { await testAPIConnection() }
+                if auth.isPro || subscription.isProEntitled {
+                    // Pro 会员：由 Vilsay 提供云端服务，不需要自备 Key
+                    VStack(alignment: .leading, spacing: VSpacing.xs) {
+                        HStack {
+                            Label("Pro 会员", systemImage: "checkmark.seal.fill")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(VColor.accent)
+                            Spacer()
                         }
-                        .controlSize(.small)
-                        .disabled(
-                            dashscopeKeyStored.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || apiTestBusy
-                        )
-                        if apiTestBusy {
-                            ProgressView().controlSize(.small)
-                        }
-                    }
-                    if let result = apiTestResult {
-                        Text(result)
+                        Text("云端语音识别与润色服务由 Vilsay 提供，无需配置 API Key。")
                             .font(.caption)
-                            .foregroundStyle(apiTestSuccess ? VColor.ok : VColor.warn)
+                            .foregroundStyle(.secondary)
                     }
-                    Text("从 dashscope.console.aliyun.com 获取；开发者可用 Xcode Scheme 环境变量 DASHSCOPE_API_KEY 覆盖。")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                }
-                .onChange(of: dashscopeKeyStored) { _, _ in
-                    apiTestSuccess = false
-                    apiTestResult = nil
+                } else {
+                    // Free 用户：需要自备 DashScope API Key
+                    VStack(alignment: .leading, spacing: VSpacing.xs) {
+                        HStack {
+                            Text("DashScope API Key")
+                                .font(.subheadline.weight(.medium))
+                            Spacer()
+                            apiKeyStatusBadge
+                        }
+                        HStack(spacing: VSpacing.sm) {
+                            SecureField("sk-…", text: $dashscopeKeyStored)
+                                .textFieldStyle(.roundedBorder)
+                            Button("验证连接") {
+                                Task { await testAPIConnection() }
+                            }
+                            .controlSize(.small)
+                            .disabled(
+                                dashscopeKeyStored.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || apiTestBusy
+                            )
+                            if apiTestBusy {
+                                ProgressView().controlSize(.small)
+                            }
+                        }
+                        if let result = apiTestResult {
+                            Text(result)
+                                .font(.caption)
+                                .foregroundStyle(apiTestSuccess ? VColor.ok : VColor.warn)
+                        }
+                        Text("免费版需自备 API Key。从 dashscope.console.aliyun.com 获取，或升级 Pro 由 Vilsay 提供服务。")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .onChange(of: dashscopeKeyStored) { _, _ in
+                        apiTestSuccess = false
+                        apiTestResult = nil
+                    }
                 }
 
                 Divider()
@@ -848,7 +900,7 @@ struct SettingsRootView: View {
                     .buttonStyle(.plain)
                     .foregroundStyle(VColor.accent)
                 Text("·").foregroundStyle(.tertiary)
-                Button("条款") { openPlaceholder() }
+                Button("条款") { NSWorkspace.shared.open(WebsiteURL.terms) }
                     .buttonStyle(.plain)
                     .foregroundStyle(VColor.accent)
             }
@@ -862,11 +914,7 @@ struct SettingsRootView: View {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
     }
 
-    private func openPlaceholder() {
-        if let url = URL(string: "https://example.com") {
-            NSWorkspace.shared.open(url)
-        }
-    }
+    // openPlaceholder removed — links now use WebsiteURL constants
 
     // MARK: - 应用输出模式（V4，UserDefaults 覆盖）
 
@@ -938,7 +986,7 @@ struct SettingsRootView: View {
             }
             .buttonStyle(.plain)
             .foregroundStyle(VColor.accent)
-            .help("反馈意见：发送邮件至 support@vilsay.com")
+            .help("反馈意见：发送邮件至 shay1230xh@163.com")
 
             Text("·")
                 .foregroundStyle(.tertiary)

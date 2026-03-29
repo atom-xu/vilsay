@@ -44,6 +44,8 @@ struct AuthUsageCurrent: Decodable {
     let used: Int
     let quota: Int
     let yearMonth: String
+    /// 后端返回 "pro" / "free"；字段可选，缺省视为 free。
+    let plan: String?
 }
 
 struct AuthVerifyStatusResponse: Decodable {
@@ -73,7 +75,19 @@ final class AuthService: ObservableObject {
     @Published private(set) var userEmail: String?
     @Published private(set) var usageUsed: Int = 0
     @Published private(set) var usageQuota: Int = 500
+    /// 用户订阅计划："pro" / "free"。从后端 `/usage/current` 获取。
+    @Published private(set) var plan: String = "free"
     @Published var lastAuthError: String?
+
+    /// 是否为 Pro 会员（后端 plan 或本地 StoreKit 订阅任一有效即可）。
+    /// BYOK 版始终返回 true（用户自备 Key，功能全开）。
+    var isPro: Bool {
+        #if BYOK_ONLY
+        return true
+        #else
+        return plan == "pro" || SubscriptionManager.shared.isProEntitled
+        #endif
+    }
 
     private init() {}
 
@@ -82,8 +96,13 @@ final class AuthService: ObservableObject {
     }
 
     /// 本地用量已达或超过配额（`TECH_SPEC_SUPPLEMENT` §3.3：客户端先行拦截）。
+    /// BYOK 版始终返回 false（用户自备 Key，无配额限制）。
     var isQuotaExceeded: Bool {
-        usageQuota > 0 && usageUsed >= usageQuota
+        #if BYOK_ONLY
+        return false
+        #else
+        return usageQuota > 0 && usageUsed >= usageQuota
+        #endif
     }
 
     /// 乐观 +1，用于上报前占位；失败时须 `decrementLocalUsage()`。
@@ -183,6 +202,7 @@ final class AuthService: ObservableObject {
         userEmail = nil
         usageUsed = 0
         usageQuota = 500
+        plan = "free"
         lastAuthError = nil
     }
 
@@ -192,6 +212,7 @@ final class AuthService: ObservableObject {
             let u: AuthUsageCurrent = try await BackendAPIClient.getJSON(path: "/usage/current", token: token)
             usageUsed = u.used
             usageQuota = u.quota
+            plan = u.plan ?? "free"
         } catch {
             if let be = error as? BackendAPIError, case .httpStatus(401, _) = be {
                 logout()

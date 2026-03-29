@@ -1,0 +1,61 @@
+{
+  "identifier" : "F8E1A2B3-C4D5-6E7F-8A9B-0C1D2E3F4A5B",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_applicationInternalID" : "0",
+    "_developerTeamID" : "AJGT557XG8",
+    "_lastSynchronizedDate" : 733276800
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "vilsay_pro",
+      "localizations" : [
+        {
+          "description" : "Vilsay Pro 订阅",
+          "displayName" : "Vilsay Pro",
+          "locale" : "zh_CN"
+        }
+      ],
+      "name" : "Vilsay Pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "18.00",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "A1B2C3D4",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "由 Vilsay 提供云端语音识别与润色服务",
+              "displayName" : "Pro 月付",
+              "locale" : "zh_CN"
+            }
+          ],
+          "productID" : "vilhil.cn.vilsay.pro.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Vilsay Pro 月付",
+          "subscriptionGroupID" : "vilsay_pro",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

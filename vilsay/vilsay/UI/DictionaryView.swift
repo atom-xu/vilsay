@@ -145,6 +145,13 @@ struct DictionaryView: View {
                 )
             } else {
                 List {
+                    Section {
+                        Text("词典中的词汇会帮助语音润色更准确地识别这些词。请只添加正确的词汇，忽略 ASR 识别错误。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                    }
                     ForEach(filteredCandidates) { c in
                         VStack(alignment: .leading, spacing: VSpacing.sm) {
                             HStack {
@@ -264,15 +271,13 @@ struct DictionaryView: View {
 
 // MARK: - 词汇 Chip 流式网格
 
-/// 自适应列宽的词汇标签网格，每个 chip 带删除按钮。
+/// 流式布局词汇标签，每个 chip 按自身内容宽度排列，一行放不下自动换行。
 private struct WordChipGrid: View {
     let entries: [DictionaryRecord]
     let onDelete: (Int64) -> Void
 
     var body: some View {
-        // LazyVGrid adaptive：chip 按内容宽度排列，最小 80pt，无最大宽度限制
-        let columns = [GridItem(.adaptive(minimum: 80), spacing: 8)]
-        LazyVGrid(columns: columns, alignment: .leading, spacing: 10) {
+        FlowLayout(spacing: 8, lineSpacing: 10) {
             ForEach(entries, id: \.word) { item in
                 wordChip(item)
             }

@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { WaveformLogo } from "@/components/WaveformLogo";
+import { VilsayLogo } from "@/components/VilsayLogo";
 
 export function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-vilsay-dark-base/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link href="/" className="flex items-center gap-2.5">
-          <WaveformLogo size={24} />
+        <Link href="/" className="flex items-center gap-3">
+          <VilsayLogo size={36} />
           <span className="text-lg font-bold tracking-tight text-vilsay-text-inverse">
             Vilsay
           </span>

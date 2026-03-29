@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import Combine
 
 /// 历史记录：单列列表 + 点击行内展开详情（accordion）。
 /// 搜索和筛选放在 toolbar；行间用间距分隔，不使用 Divider 横线。
@@ -14,6 +15,7 @@ struct HistoryView: View {
     @State private var dateFilter: HistoryDateFilter = .all
     @State private var flaggedOnly = false
     @State private var expandedId: Int64?
+    @State private var pipelineCancellable: AnyCancellable?
 
     var body: some View {
         Group {
@@ -56,7 +58,16 @@ struct HistoryView: View {
                 .help("仅显示已标记有误的记录")
             }
         }
-        .onAppear { refreshList() }
+        .onAppear {
+            refreshList()
+            pipelineCancellable = NotificationCenter.default
+                .publisher(for: .init("VilsayPipelineDidComplete"))
+                .debounce(for: .seconds(0.3), scheduler: RunLoop.main)
+                .sink { _ in refreshList() }
+        }
+        .onDisappear {
+            pipelineCancellable = nil
+        }
         .onChange(of: searchText) { _, _ in refreshList() }
         .onChange(of: dateFilter) { _, _ in refreshList() }
         .onChange(of: flaggedOnly) { _, _ in refreshList() }
@@ -167,6 +178,41 @@ struct HistoryView: View {
                         .buttonStyle(.plain)
                         .help("复制润色结果")
                     }
+                }
+            }
+
+            // Review 结果（后台二次校验）
+            if let reviewText = record.reviewText, !reviewText.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 4) {
+                        Text("Review 结果")
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(.secondary)
+                        if let ms = record.reviewMs {
+                            Text("(\(ms)ms)")
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                        }
+                        if reviewText != record.polishedText {
+                            Text("有修正")
+                                .font(.caption2)
+                                .padding(.horizontal, 4)
+                                .padding(.vertical, 1)
+                                .background(VColor.warn.opacity(0.15), in: Capsule())
+                                .foregroundStyle(VColor.warn)
+                        } else {
+                            Text("无变化")
+                                .font(.caption2)
+                                .padding(.horizontal, 4)
+                                .padding(.vertical, 1)
+                                .background(Color.green.opacity(0.15), in: Capsule())
+                                .foregroundStyle(.green)
+                        }
+                    }
+                    Text(reviewText)
+                        .font(.callout)
+                        .foregroundStyle(.primary.opacity(0.75))
+                        .textSelection(.enabled)
                 }
             }
 

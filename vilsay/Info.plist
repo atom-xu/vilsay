@@ -2,6 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- App Store 分类：工具类 -->
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.productivity</string>
 	<!-- W6：上架 / TestFlight 问卷 — 仅标准 HTTPS 等豁免场景时可填 NO -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>

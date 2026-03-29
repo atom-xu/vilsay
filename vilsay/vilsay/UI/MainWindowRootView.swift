@@ -36,6 +36,8 @@ struct MainWindowRootView: View {
             HistoryView()
         case .dictionary:
             DictionaryView()
+        case .profile:
+            ProfileView()
         case .settings:
             SettingsRootView()
         }

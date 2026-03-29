@@ -1,6 +1,6 @@
 # VILSAY · 技术规范补充
 # Cursor Technical Spec Supplement
-# 版本：1.2 | 日期：2026-03-24
+# 版本：1.3 | 日期：2026-03-29
 # 与 `docs/spec/VILSAY_TECH_ARCH.md` 配合使用；**若与总架构冲突，以 `VILSAY_TECH_ARCH.md` 为准**。
 # **第一～六章**为对开发侧（含 Cursor）此前提出的架构/产品问题的**已定稿答复**；**附录 A** 仅为「当前代码 vs 规约」的迁移对照，**不以附录否定前文**。
 
@@ -17,7 +17,7 @@
 
 ## 一、流式 ASR + VAD + Pipeline 数据流
 
-> **现状（Phase 1～3 主路径）**：麦克风 → 整段 `caf` → Whisper 或 Paraformer（公网 URL）→ **文本**进入 `VADBuffer.acceptFinalTranscript` → 润色。**本节下图描述的是目标态：流式音频 + 分段 ASR + 文本/能量 VAD，尚未全量落地。**
+> **现状**：麦克风 → 整段录音 → **qwen-audio-asr**（主路径，多模态 LLM，API Key 可用时）→ **文本**进入 `VADBuffer.acceptFinalTranscript` → 润色。降级链路：Proxy upload → Paraformer REST async → WhisperKit local。文件 ASR 模型为 qwen-audio-asr（可通过 `VILSAY_FILE_ASR_MODEL` 配置）。**本节下图描述的是目标态：流式音频 + 分段 ASR + 文本/能量 VAD，尚未全量落地。**
 
 ### 1.1 整体数据流
 
@@ -30,7 +30,7 @@ VADBuffer
   ├── 有声音 → 累积到 speechBuffer
   └── 静音 > 800ms → 触发句子完成回调
         ↓ 完整句子音频
-ASRService（当前：WhisperKit 或 Paraformer REST）
+ASRService（当前：qwen-audio-asr → Proxy upload → Paraformer REST → WhisperKit）
         ↓ 原始文字
 PolishService（Qwen SSE 流式）
         ↓ 逐字符 token
@@ -253,7 +253,7 @@ Authorization: Bearer <accessToken>
 {
   "type": "polish",          // polish | select_speak
   "duration_ms": 3200,       // 录音时长（毫秒）
-  "asr_provider": "whisper", // whisper | paraformer
+  "asr_provider": "qwen-audio-asr", // qwen-audio-asr | paraformer | whisper
   "client_version": "1.0.0"
 }
 
@@ -485,13 +485,13 @@ enum AppError {
 ```
 
 ---
-## 附录 A · 实现迁移对照（刷新：2026-03-26）
+## 附录 A · 实现迁移对照（刷新：2026-03-29）
 
 **规约来源**：第一～六章。下表描述**当前仓库相对规约**的差异或已收敛项；**产品定义仍以正文 chapters 与 `VILSAY_TECH_ARCH.md` 为准**。
 
 | 主题 | 规约（见上文章节） | 当前实现要点 |
 |------|----------------------|--------------|
-| 流式 ASR + 音频 VAD | 第一章：连续音频、能量/文本 VAD | **部分收敛**：`DashScopeStreamingASRClient` + `AppConfig.streamingASREnabled` 已接入 `Pipeline`；**整段 WAV 兜底**与 **文本 VAD 全量对齐**仍可按任务书 W4-01 继续收紧 |
+| ASR Pipeline | 第一章：ASR 优先级与降级 | **已收敛**：主路径 qwen-audio-asr（多模态 LLM，API Key 可用时）→ Proxy upload → Paraformer REST async → WhisperKit local；文件 ASR 模型为 qwen-audio-asr（`VILSAY_FILE_ASR_MODEL` 可配）；**文本 VAD 全量对齐**仍可按任务书 W4-01 继续收紧 |
 | `POST /usage/record` | 第三章 JSON body | **已收敛**：客户端 `UsageRecordAPIRequest`；服务端 `UsageRecordBody`（`type`、`duration_ms`、`asr_provider`、`client_version`） |
 | API 前缀 `/api/v1/` | 第五章 | **已收敛**：`BackendAPIClient` 统一 `apiPrefix`；FastAPI 路由挂载于 `/api/v1` |
 | 免费额度数值 | 第三章 vs 服务端默认 | **产品待定**：`server/app/config.py` 等处默认配额需与 PRD **显式对齐** |

@@ -200,6 +200,75 @@ enum DashScopeASRClient {
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    // MARK: - Qwen Audio ASR（LLM 端到端文件识别）
+
+    private static let multimodalEndpoint = URL(string: "https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation")!
+
+    /// 使用 qwen-audio-asr 进行端到端 LLM ASR（本地文件 base64 上传，同步返回）。
+    /// 比 Paraformer 更准确（自带上下文推理、中英文混合纠偏），适合录音后粘贴场景。
+    /// - Returns: 识别文本；未配置 Key 或失败返回 `nil`。
+    static func transcribeViaQwenAudio(_ localFileURL: URL) async -> String? {
+        guard let key = AppConfig.dashscopeAPIKey, !key.isEmpty else { return nil }
+        guard FileManager.default.fileExists(atPath: localFileURL.path) else { return nil }
+
+        let fileData: Data
+        do {
+            fileData = try Data(contentsOf: localFileURL)
+        } catch {
+            return nil
+        }
+
+        let base64 = fileData.base64EncodedString()
+        let ext = localFileURL.pathExtension.lowercased()
+        let mime = ext == "wav" ? "audio/wav" : ext == "m4a" ? "audio/m4a" : "audio/\(ext)"
+        let dataURI = "data:\(mime);base64,\(base64)"
+
+        let model = AppConfig.fileASRModel
+        let body: [String: Any] = [
+            "model": model,
+            "input": [
+                "messages": [
+                    ["role": "user", "content": [["audio": dataURI]]]
+                ]
+            ]
+        ]
+
+        var req = URLRequest(url: multimodalEndpoint)
+        req.httpMethod = "POST"
+        req.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.timeoutInterval = 30
+
+        do {
+            req.httpBody = try JSONSerialization.data(withJSONObject: body)
+        } catch {
+            return nil
+        }
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: req)
+            guard let http = response as? HTTPURLResponse, (200 ... 299).contains(http.statusCode) else {
+                return nil
+            }
+            guard
+                let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                let output = json["output"] as? [String: Any],
+                let choices = output["choices"] as? [[String: Any]],
+                let first = choices.first,
+                let message = first["message"] as? [String: Any],
+                let content = message["content"] as? [[String: Any]],
+                let textObj = content.first,
+                let text = textObj["text"] as? String
+            else {
+                return nil
+            }
+            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? nil : trimmed
+        } catch {
+            return nil
+        }
+    }
+
     private enum DashScopeError: Error {
         case badResponse
         case parseFailed

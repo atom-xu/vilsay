@@ -12,7 +12,7 @@ enum Constants {
     #else
     static let analyzerTriggerThreshold = 20
     #endif
-    static let analyzerRecentSessions = 50
+    static let analyzerRecentSessions = 8
     static let vadPauseMs: UInt64 = 800
     /// 最短有效语音（秒），低于此视为空音频兜底，不进入 ASR（`VILSAY_TECH_SPEC_SUPPLEMENT` §1.4）。
     static let vadMinSpeechSeconds: TimeInterval = 0.3

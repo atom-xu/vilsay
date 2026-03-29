@@ -107,5 +107,11 @@ enum Migrations {
             try db.drop(table: "user_profile")
             try db.rename(table: "user_profile_v3", to: "user_profile")
         }
+        migrator.registerMigration("v4_add_review_columns") { db in
+            try db.alter(table: "raw_log") { t in
+                t.add(column: "review_text", .text)
+                t.add(column: "review_ms", .integer)
+            }
+        }
     }
 }

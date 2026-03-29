@@ -21,28 +21,23 @@ enum PolishService {
 
                 var yieldedAny = false
 
-                #if DEBUG
-                guard let apiKey = AppConfig.dashscopeAPIKey, !apiKey.isEmpty else {
-                    Self.log.warning("⚠️ 无 DASHSCOPE_API_KEY，跳过润色，返回原文")
-                    let text = extractPlainText(from: user)
-                    continuation.yield(text)
-                    return
-                }
-                #else
-                guard let vilsayToken = KeychainTokenStore.loadToken(), !vilsayToken.isEmpty else {
-                    Self.log.warning("⚠️ 无 Vilsay Token，跳过润色，返回原文")
-                    let text = extractPlainText(from: user)
-                    continuation.yield(text)
-                    return
-                }
-                #endif
+                // 凭证优先级：用户自备 DashScope Key → Vilsay 账号 Token（Pro 走代理）
+                let ownKey = AppConfig.dashscopeAPIKey
+                let vilsayToken = KeychainTokenStore.loadToken()
+                let hasOwnKey = ownKey != nil && !ownKey!.isEmpty
+                let hasToken = vilsayToken != nil && !vilsayToken!.isEmpty
 
+                guard hasOwnKey || hasToken else {
+                    Self.log.warning("⚠️ 无 API Key 且无账号 Token，跳过润色，返回原文")
+                    let text = extractPlainText(from: user)
+                    continuation.yield(text)
+                    return
+                }
+
+                // 用自备 Key 时可走 compat 模式；走代理时用原生模式
                 let useCompat: Bool = {
-                    #if DEBUG
+                    guard hasOwnKey else { return false }
                     return AppConfig.polishUsesOpenAICompatChatCompletions
-                    #else
-                    return false
-                    #endif
                 }()
 
                 let body: [String: Any] = {
@@ -78,13 +73,12 @@ enum PolishService {
                     return
                 }
 
-                var req = URLRequest(url: AppConfig.polishHTTPURL)
+                // 自备 Key → 直连 DashScope；否则走 Vilsay 代理
+                let targetURL: URL = hasOwnKey ? AppConfig.polishHTTPURL : AppConfig.qwenPolishEndpoint
+                let bearerToken = hasOwnKey ? ownKey! : vilsayToken!
+                var req = URLRequest(url: targetURL)
                 req.httpMethod = "POST"
-                #if DEBUG
-                req.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-                #else
-                req.setValue("Bearer \(vilsayToken)", forHTTPHeaderField: "Authorization")
-                #endif
+                req.setValue("Bearer \(bearerToken)", forHTTPHeaderField: "Authorization")
                 req.setValue("application/json", forHTTPHeaderField: "Content-Type")
                 if !useCompat {
                     req.setValue("enable", forHTTPHeaderField: "X-DashScope-SSE")
@@ -146,86 +140,67 @@ enum PolishService {
         }
     }
 
-    static func polishPlain(system: String, user: String) async -> String {
-        #if DEBUG
-        guard let apiKey = AppConfig.dashscopeAPIKey, !apiKey.isEmpty else {
-            Self.log.warning("⚠️ polishPlain：无 API Key，返回原文")
+    static func polishPlain(system: String, user: String, timeoutMs: UInt64? = nil, model: String? = nil) async -> String {
+        // 凭证优先级：用户自备 DashScope Key → Vilsay 账号 Token（Pro 走代理）
+        let ownKey = AppConfig.dashscopeAPIKey
+        let vilsayToken = KeychainTokenStore.loadToken()
+        let hasOwnKey = ownKey != nil && !ownKey!.isEmpty
+        let hasToken = vilsayToken != nil && !vilsayToken!.isEmpty
+
+        guard hasOwnKey || hasToken else {
+            Self.log.warning("⚠️ polishPlain：无 API Key 且无账号 Token，返回原文")
             return extractPlainText(from: user)
         }
-        #else
-        guard let vilsayToken = KeychainTokenStore.loadToken(), !vilsayToken.isEmpty else {
-            Self.log.warning("⚠️ polishPlain：无 Token，返回原文")
-            return extractPlainText(from: user)
-        }
-        #endif
 
-        #if DEBUG
-        if AppConfig.polishUsesOpenAICompatChatCompletions {
-            let body: [String: Any] = [
-                "model": AppConfig.dashscopePolishModel,
-                "messages": [
-                    ["role": "system", "content": system],
-                    ["role": "user", "content": user]
+        // 用自备 Key 时可走 compat 模式；走代理时用原生模式
+        let useCompat: Bool = {
+            guard hasOwnKey else { return false }
+            return AppConfig.polishUsesOpenAICompatChatCompletions
+        }()
+
+        let effectiveModel = model ?? AppConfig.dashscopePolishModel
+
+        let body: [String: Any] = {
+            if useCompat {
+                return [
+                    "model": effectiveModel,
+                    "messages": [
+                        ["role": "system", "content": system],
+                        ["role": "user", "content": user]
+                    ]
+                ]
+            }
+            var b: [String: Any] = [
+                "model": effectiveModel,
+                "input": [
+                    "messages": [
+                        ["role": "system", "content": system],
+                        ["role": "user", "content": user]
+                    ]
                 ]
             ]
-            guard let httpBody = try? JSONSerialization.data(withJSONObject: body) else {
-                Self.log.error("❌ polishPlain（兼容模式）JSON 序列化失败")
-                return extractPlainText(from: user)
-            }
-            var req = URLRequest(url: AppConfig.polishHTTPURL)
-            req.httpMethod = "POST"
-            req.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-            req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            req.httpBody = httpBody
-            req.timeoutInterval = Double(Constants.polishTimeoutMs) / 1000.0
-            let config = URLSessionConfiguration.ephemeral
-            config.timeoutIntervalForRequest = Double(Constants.polishTimeoutMs) / 1000.0
-            let session = URLSession(configuration: config)
-            do {
-                let (data, response) = try await session.data(for: req)
-                guard let http = response as? HTTPURLResponse, (200 ... 299).contains(http.statusCode) else {
-                    let code = (response as? HTTPURLResponse)?.statusCode ?? -1
-                    Self.log.error("❌ polishPlain（兼容模式）HTTP \(code)")
-                    return extractPlainText(from: user)
-                }
-                _ = http
-                return PolishStreamParsing.openAICompatNonStreamContent(from: data) ?? extractPlainText(from: user)
-            } catch {
-                Self.log.error("❌ polishPlain（兼容模式）网络错误：\(error.localizedDescription)")
-                return extractPlainText(from: user)
-            }
-        }
-        #endif
-
-        var body: [String: Any] = [
-            "model": AppConfig.dashscopePolishModel,
-            "input": [
-                "messages": [
-                    ["role": "system", "content": system],
-                    ["role": "user", "content": user]
-                ]
-            ]
-        ]
-        body["parameters"] = ["result_format": "message"]
+            b["parameters"] = ["result_format": "message"]
+            return b
+        }()
 
         guard let httpBody = try? JSONSerialization.data(withJSONObject: body) else {
             Self.log.error("❌ polishPlain JSON 序列化失败")
             return extractPlainText(from: user)
         }
 
-        var req = URLRequest(url: AppConfig.polishHTTPURL)
+        // 自备 Key → 直连 DashScope；否则走 Vilsay 代理
+        let targetURL: URL = hasOwnKey ? AppConfig.polishHTTPURL : AppConfig.qwenPolishEndpoint
+        let bearerToken = hasOwnKey ? ownKey! : vilsayToken!
+        var req = URLRequest(url: targetURL)
         req.httpMethod = "POST"
-        #if DEBUG
-        req.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        #else
-        req.setValue("Bearer \(vilsayToken)", forHTTPHeaderField: "Authorization")
-        #endif
+        req.setValue("Bearer \(bearerToken)", forHTTPHeaderField: "Authorization")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = httpBody
-        req.timeoutInterval = Double(Constants.polishTimeoutMs) / 1000.0
+        let effectiveTimeout = Double(timeoutMs ?? Constants.polishTimeoutMs) / 1000.0
+        req.timeoutInterval = effectiveTimeout
 
         let config = URLSessionConfiguration.ephemeral
-        config.timeoutIntervalForRequest = Double(Constants.polishTimeoutMs) / 1000.0
+        config.timeoutIntervalForRequest = effectiveTimeout
         let session = URLSession(configuration: config)
 
         do {
@@ -236,7 +211,10 @@ enum PolishService {
                 return extractPlainText(from: user)
             }
             _ = http
-            return PolishStreamParsing.nativeNonStreamQwenContent(from: data) ?? extractPlainText(from: user)
+            let content = useCompat
+                ? PolishStreamParsing.openAICompatNonStreamContent(from: data)
+                : PolishStreamParsing.nativeNonStreamQwenContent(from: data)
+            return content ?? extractPlainText(from: user)
         } catch {
             Self.log.error("❌ polishPlain 网络错误：\(error.localizedDescription)")
             return extractPlainText(from: user)

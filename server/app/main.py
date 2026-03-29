@@ -75,6 +75,7 @@ def _migrate_sqlite() -> None:
         "ALTER TABLE users ADD COLUMN reset_token VARCHAR(128)",
         "ALTER TABLE users ADD COLUMN reset_token_expires_at DATETIME",
         "ALTER TABLE usage_events ADD COLUMN duration_ms INTEGER",
+        "ALTER TABLE users ADD COLUMN plan VARCHAR(16) DEFAULT 'free'",
     ]
     with engine.connect() as conn:
         for sql in alters:
@@ -379,7 +380,8 @@ def reset_password(body: ResetPasswordBody, db: Session = Depends(get_db)) -> Me
 @api.get("/usage/current", response_model=UsageCurrentResponse)
 def usage_current(user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> UsageCurrentResponse:
     used = _usage_count(db, user.id)
-    return UsageCurrentResponse(used=used, quota=settings.free_monthly_quota, year_month=_year_month_str())
+    plan = getattr(user, "plan", None) or "free"
+    return UsageCurrentResponse(used=used, quota=settings.free_monthly_quota, year_month=_year_month_str(), plan=plan)
 
 
 @api.get("/usage/history", response_model=UsageHistoryResponse)
@@ -428,7 +430,8 @@ def usage_record(
     db: Session = Depends(get_db),
 ) -> UsageRecordResponse:
     used = _usage_count(db, user.id)
-    if used >= settings.free_monthly_quota:
+    plan = getattr(user, "plan", None) or "free"
+    if plan != "pro" and used >= settings.free_monthly_quota:
         raise HTTPException(
             status_code=402,
             detail={
@@ -448,6 +451,22 @@ def usage_record(
         total=settings.free_monthly_quota,
         reset_at=_reset_at_iso(),
     )
+
+
+@api.post("/subscription/sync", response_model=MessageResponse)
+def subscription_sync(
+    body: dict,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> MessageResponse:
+    """客户端 StoreKit 2 购买后同步 plan 到后端。"""
+    plan = body.get("plan", "free")
+    if plan not in ("pro", "free"):
+        raise HTTPException(status_code=400, detail="invalid plan value")
+    user.plan = plan
+    db.commit()
+    logger.info("subscription_sync: user=%s plan=%s", user.email, plan)
+    return MessageResponse(message="ok")
 
 
 api.include_router(asr_router)

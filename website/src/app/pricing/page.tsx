@@ -6,14 +6,14 @@ const freeItems = [
   { ok: true,  text: "基础 AI 润色" },
   { ok: true,  text: "自定义词典（20 条）" },
   { ok: false, text: "云端高速 ASR" },
-  { ok: false, text: "AI3 个性化学习" },
+  { ok: false, text: "洞察引擎个性化学习" },
   { ok: false, text: "无限次使用" },
 ];
 
 const proItems = [
   { ok: true, text: "无限次语音润色" },
   { ok: true, text: "云端高速 ASR（更准确）" },
-  { ok: true, text: "AI3 个性化学习" },
+  { ok: true, text: "洞察引擎个性化学习" },
   { ok: true, text: "自定义词典（无限）" },
   { ok: true, text: "本地 WhisperKit 离线备用" },
   { ok: true, text: "优先技术支持" },
@@ -43,9 +43,9 @@ export default function PricingPage() {
           />
           <PricingCard
             name="Pro"
-            price="¥28"
+            price="¥38"
             period="/月"
-            sub="按年付 ¥268/年，省 68 元"
+            sub="按年付 ¥288/年，省 168 元"
             highlight
             items={proItems}
             cta="升级 Pro"

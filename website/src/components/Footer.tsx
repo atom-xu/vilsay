@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { WaveformLogo } from "@/components/WaveformLogo";
+import { VilsayLogo } from "@/components/VilsayLogo";
 
 export function Footer() {
   return (
@@ -7,8 +7,8 @@ export function Footer() {
       <div className="mx-auto max-w-6xl px-6 py-12">
         <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <div className="flex items-center gap-2.5 mb-3">
-              <WaveformLogo size={20} />
+            <div className="flex items-center gap-3 mb-3">
+              <VilsayLogo size={32} />
               <span className="font-bold text-vilsay-text-inverse">Vilsay</span>
             </div>
             <p className="text-sm text-vilsay-text-inv-sec max-w-xs leading-relaxed">

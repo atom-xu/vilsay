@@ -16,6 +16,7 @@ class User(Base):
     verification_token: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     reset_token: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     reset_token_expires_at: Mapped[dt.datetime | None] = mapped_column(DateTime, nullable=True)
+    plan: Mapped[str] = mapped_column(String(16), default="free")
     created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=lambda: dt.datetime.now(dt.UTC))
 
     usage_events: Mapped[list["UsageEvent"]] = relationship(back_populates="user")

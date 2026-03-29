@@ -15,6 +15,7 @@ enum AppConfig {
     private static let dashscopeModelAsrKey = "vilsay.dashscope_model_asr"
     private static let dashscopeModelPolishKey = "vilsay.dashscope_model_polish"
     private static let dashscopeModelAnalyzerKey = "vilsay.dashscope_model_analyzer"
+    private static let dashscopeModelReviewKey = "vilsay.dashscope_model_review"
     private static let dashscopeParaformerFileURLKey = "vilsay.dashscope_paraformer_file_url"
     private static let asrProxyTranscribeURLKey = "vilsay.asr_proxy_transcribe_url"
 
@@ -39,9 +40,27 @@ enum AppConfig {
         envOrDefaults("DASHSCOPE_API_KEY", key: dashscopeAPIKeyKey)
     }
 
-    /// 润色（Qwen）模型 ID。
+    // MARK: - 模型配置
+    // 三层模型架构：fast（主链路）/ balanced（Review+AI3）/ ASR
+    // 默认值为 DashScope Qwen 系列；用户可通过环境变量或设置页切换为其他供应商模型。
+    // 例如 OpenAI：VILSAY_QWEN_MODEL=gpt-4o-mini  VILSAY_REVIEW_MODEL=gpt-4o
+    // 例如豆包：VILSAY_QWEN_MODEL=doubao-lite     VILSAY_REVIEW_MODEL=doubao-pro
+
+    // MARK: - 模型配置（从 DashScope API /v1/models 拉取确认）
+    //
+    // 可用文本模型及价格（元/百万token）：
+    //   qwen-flash      输入 0.15  输出 1.5   — 最快最便宜，Qwen3 Flash
+    //   qwen-turbo      输入 0.3   输出 0.6   — 轻量快速，Qwen3 Turbo
+    //   qwen-plus       输入 0.8   输出 2.0   — 平衡，Qwen3 Plus
+    //   qwen-max        输入 2.4   输出 9.6   — 最强，千问2.5 Max
+    //   qwen3.5-flash   输入 0.2   输出 2.0   — Qwen3.5 最新 Flash
+    //   qwen3.5-plus    输入 0.8   输出 4.8   — Qwen3.5 最新 Plus
+    //
+    // 用户可通过环境变量或设置页切换模型（包括其他供应商）。
+
+    /// 主链路润色模型（速度优先）。qwen-flash：最快最便宜，适合实时润色。
     static var dashscopePolishModel: String {
-        envOrDefaults("VILSAY_QWEN_MODEL", key: dashscopeModelPolishKey) ?? "qwen-turbo"
+        envOrDefaults("VILSAY_QWEN_MODEL", key: dashscopeModelPolishKey) ?? "qwen-flash"
     }
 
     /// 与 `dashscopePolishModel` 同义（历史命名）。
@@ -52,9 +71,14 @@ enum AppConfig {
         envOrDefaults("VILSAY_ASR_MODEL", key: dashscopeModelAsrKey) ?? "paraformer-v2"
     }
 
-    /// AI3 / 分析模型。
+    /// AI3 分析模型（理解力优先，后台运行）。qwen-plus：更强理解力，分析用户画像和候选词。
     static var dashscopeAnalyzerModel: String {
-        envOrDefaults("VILSAY_ANALYZER_MODEL", key: dashscopeModelAnalyzerKey) ?? dashscopePolishModel
+        envOrDefaults("VILSAY_ANALYZER_MODEL", key: dashscopeModelAnalyzerKey) ?? "qwen-plus"
+    }
+
+    /// L3 Review 审校模型（理解力优先，后台运行，用不同模型避免"自己审自己"）。
+    static var dashscopeReviewModel: String {
+        envOrDefaults("VILSAY_REVIEW_MODEL", key: dashscopeModelReviewKey) ?? "qwen-plus"
     }
 
     /// DEBUG：原生 `text-generation` 与 OpenAI 兼容 `chat/completions` 切换。
@@ -71,26 +95,34 @@ enum AppConfig {
         #endif
     }
 
-    /// 润色 HTTP 目标。
+    /// 用户自备 DashScope Key 时的直连 URL（原生 text-generation 接口）。
+    static let dashscopeDirectURL = URL(string: "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation")!
+
+    /// 用户自备 DashScope Key 时的 OpenAI 兼容模式 URL。
+    static let dashscopeCompatURL = URL(string: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions")!
+
+    /// 润色 HTTP 目标：自备 Key 始终直连 DashScope，否则走 Vilsay 代理。
     static var polishHTTPURL: URL {
-        #if DEBUG
-        if polishUsesOpenAICompatChatCompletions {
-            return URL(string: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions")!
+        // 用户自备 API Key → 永远直连 DashScope，不受构建配置影响
+        if hasDashScopeAPIKey {
+            if polishUsesOpenAICompatChatCompletions {
+                return dashscopeCompatURL
+            }
+            return dashscopeDirectURL
         }
-        #endif
         return qwenPolishEndpoint
     }
 
-    /// 润色 API：DEBUG 直连 DashScope；Release 走自建代理。
+    /// 润色 API 代理端点（无自备 Key 时走后端代理）。
     static var qwenPolishEndpoint: URL {
-        #if DEBUG
-        URL(string: "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation")!
-        #else
         if let raw = ProcessInfo.processInfo.environment["VILSAY_POLISH_PROXY_URL"]?
             .trimmingCharacters(in: .whitespacesAndNewlines),
            let u = URL(string: raw), !raw.isEmpty {
             return u
         }
+        #if BYOK_ONLY || DEBUG
+        return dashscopeDirectURL
+        #else
         return URL(string: "https://api.vilsay.com/api/v1/polish")!
         #endif
     }
@@ -99,13 +131,23 @@ enum AppConfig {
         dashscopeAPIKey != nil
     }
 
-    /// DEBUG：百炼 Key；Release：账号 Token（与 `PolishService` 一致）。
-    static var canRunPolishWithCurrentCredentials: Bool {
-        #if DEBUG
-            hasDashScopeAPIKey
+    /// BYOK 专版：用户自备 API Key，无内购，无后端账号。
+    static var byokOnly: Bool {
+        #if BYOK_ONLY
+        return true
         #else
-            let t = KeychainTokenStore.loadToken()?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            return !t.isEmpty
+        return false
+        #endif
+    }
+
+    /// 当前是否可以执行润色：BYOK 版仅检查 API Key；标准版检查 Key 或 Pro Token。
+    static var canRunPolishWithCurrentCredentials: Bool {
+        #if BYOK_ONLY
+        return hasDashScopeAPIKey
+        #else
+        if hasDashScopeAPIKey { return true }
+        let t = KeychainTokenStore.loadToken()?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return !t.isEmpty
         #endif
     }
 
@@ -114,9 +156,22 @@ enum AppConfig {
         hasDashScopeAPIKey && NetworkMonitor.shared.isConnected
     }
 
-    /// WebSocket 实时识别模型。
+    /// L3 Review：润色后二次校验开关。通过设置页或环境变量 VILSAY_POLISH_REVIEW=1 启用。
+    static var polishReviewEnabled: Bool {
+        if let e = ProcessInfo.processInfo.environment["VILSAY_POLISH_REVIEW"]?
+            .trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+           e == "1" || e == "true" { return true }
+        return UserDefaults.standard.bool(forKey: "vilsay.polish_review_enabled")
+    }
+
+    /// WebSocket 实时识别模型（流式反馈用）。
     static var streamingASRModel: String {
         envOrDefaults("VILSAY_STREAMING_ASR_MODEL", key: "vilsay.streaming_asr_model") ?? "paraformer-realtime-v2"
+    }
+
+    /// 文件识别模型。qwen-audio-asr：基于 Qwen-Audio 的端到端 LLM ASR，自带上下文纠偏，中英文混合更准。
+    static var fileASRModel: String {
+        envOrDefaults("VILSAY_FILE_ASR_MODEL", key: "vilsay.file_asr_model") ?? "qwen-audio-asr"
     }
 
     /// 账号后端基址。仅填协议 + 主机（+ 端口）。

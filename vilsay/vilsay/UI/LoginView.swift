@@ -306,9 +306,9 @@ struct LoginView: View {
 
     private var footerLinks: some View {
         HStack(spacing: VSpacing.sm) {
-            linkButton("隐私政策") { openPlaceholderLink() }
+            linkButton("隐私政策") { NSWorkspace.shared.open(WebsiteURL.privacy) }
             Text("·").foregroundStyle(.tertiary)
-            linkButton("服务条款") { openPlaceholderLink() }
+            linkButton("服务条款") { NSWorkspace.shared.open(WebsiteURL.terms) }
         }
         .font(.caption)
         .frame(maxWidth: .infinity)
@@ -321,11 +321,7 @@ struct LoginView: View {
             .foregroundStyle(VColor.accent)
     }
 
-    private func openPlaceholderLink() {
-        if let url = URL(string: "https://example.com") {
-            NSWorkspace.shared.open(url)
-        }
-    }
+    // openPlaceholderLink removed — links now use WebsiteURL constants
 
     // MARK: - 验证邮件提示
 

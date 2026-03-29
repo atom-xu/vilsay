@@ -126,13 +126,18 @@ struct DashboardView: View {
                     icon: "gauge.with.dots.needle.50percent",
                     color: .purple
                 )
-                cumulativeCard(
-                    title: "个性化",
-                    value: personalizationPercent,
-                    subtitle: "AI 润色适应度",
-                    icon: "brain.head.profile",
-                    color: .pink
-                )
+                Button {
+                    AppState.shared.selectedNavItem = .profile
+                } label: {
+                    cumulativeCard(
+                        title: "个性化",
+                        value: data.archetype?.label ?? "\(data.personalizationScore)%",
+                        subtitle: data.archetype != nil ? "\(data.archetype!.englishLabel) · 适应度 \(data.personalizationScore)% →" : "AI 润色适应度 →",
+                        icon: data.archetype?.icon ?? "brain.head.profile",
+                        color: .pink
+                    )
+                }
+                .buttonStyle(.plain)
             }
         }
     }
@@ -160,14 +165,6 @@ struct DashboardView: View {
         }
     }
 
-    private var personalizationPercent: String {
-        // 基于词典候选数和已确认数估算个性化程度
-        let candidates = state.candidatesCount
-        if candidates <= 0 { return "0%" }
-        let confirmed = max(0, candidates)
-        let pct = min(100, confirmed * 2)  // 简单启发式
-        return "\(pct)%"
-    }
 
     // MARK: - 反馈
 

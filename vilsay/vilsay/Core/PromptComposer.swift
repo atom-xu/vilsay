@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import GRDB
 
 /// 将 `UserProfile` 中的结构化数据在**代码层**转为自然语言，再与固定层拼接；**禁止**在 Prompt 字符串中硬编码 §1 占位符。
 enum PromptComposer {
@@ -11,8 +12,8 @@ enum PromptComposer {
         systemPrompt(for: profile, targetAppBundleID: nil, asrConfidence: nil)
     }
 
-    /// V3：§0 + §A + §C + §1（含 §1.P）+ §2。
-    /// V4：当 `OutputMode` ≠ `.general` 时走模式专属 §0/§A/§2，§C/§1 与 V3 相同。
+    /// V3：§0 + §A + §C + §P（画像）+ §1（含 §1.P）+ §2。
+    /// V4：当 `OutputMode` ≠ `.general` 时走模式专属 §0/§A/§2，§C/§P/§1 与 V3 相同。
     static func systemPrompt(
         for profile: UserProfile?,
         targetAppBundleID: String? = nil,
@@ -28,6 +29,9 @@ enum PromptComposer {
             }
             if let c = Self.confidenceSection(asrConfidence: asrConfidence) {
                 sections.append(c)
+            }
+            if let portrait = Self.loadPortrait() {
+                sections.append(portrait)
             }
             if let p = Self.profileExclusiveSection(for: profile) {
                 sections.append(p)
@@ -49,12 +53,26 @@ enum PromptComposer {
             sections.append(c)
         }
 
+        if let portrait = Self.loadPortrait() {
+            sections.append(portrait)
+        }
+
         if let p = Self.profileExclusiveSection(for: profile) {
             sections.append(p)
         }
 
         sections.append(Prompts.processingEngine)
         return sections.joined(separator: "\n\n---\n\n")
+    }
+
+    /// §P 认知画像：AI3 累积学习的用户理解，注入给 AI2 做润色上下文。
+    private static func loadPortrait() -> String? {
+        guard let pool = try? AppDatabase.shared.dbPool else { return nil }
+        let portrait = try? pool.read { db in
+            try String.fetchOne(db, sql: "SELECT value FROM user_profile WHERE key = 'ai3_portrait' AND output_mode = '__global__' LIMIT 1")
+        }
+        guard let p = portrait, !p.isEmpty else { return nil }
+        return "【用户认知画像（AI3 学习生成，请内化后用于润色判断）】\n\(p)"
     }
 
     /// §C 置信度分级提示。
@@ -110,11 +128,17 @@ enum PromptComposer {
             s1 += "高频词典：\(dict)\n"
         }
 
-        let pinyinItems = p.dictionaryItems.filter { ($0.pinyin ?? "").isEmpty == false }
-        if !pinyinItems.isEmpty {
-            let hints = pinyinItems.prefix(50)
-                .map { "\($0.word)(\($0.pinyin!))" }.joined(separator: "、")
-            s1 += "以下词汇容易被语音误识别为同音词，遇到发音相似的错误请优先替换为正确词汇：\(hints)\n"
+        // 字典纠偏提示：英文词/缩写容易被 ASR 拆碎或音译为中文碎片，需要更强的匹配提示
+        if !p.dictionaryItems.isEmpty {
+            let hints = p.dictionaryItems.prefix(50)
+                .map { item -> String in
+                    let pinyin = item.pinyin ?? ""
+                    if pinyin.isEmpty || pinyin == item.word {
+                        return item.word
+                    }
+                    return "\(item.word)(\(pinyin))"
+                }.joined(separator: "、")
+            s1 += "⚠️ ASR 纠偏重点词汇：\(hints)。这些词在语音识别中经常被错误拆分、音译或乱码（例如英文词被拆成无意义碎片、混入中文字）。遇到拼写相近、发音相似、或无意义的字母/汉字组合时，优先匹配这些词汇进行替换。\n"
         }
 
         if s1.isEmpty { return nil }
@@ -133,6 +157,12 @@ enum PromptComposer {
         "com.apple.Pages": "用户在写文档，注意段落完整性",
         "com.apple.Notes": "用户在记笔记，保持简洁",
         "com.notion.id": "用户在写笔记/文档，注意结构化表达",
+        // 终端/IDE：用户在与 AI 或编写代码
+        "com.apple.Terminal": "用户在与 AI 对话或使用终端，输出应简洁精练",
+        "com.googlecode.iterm2": "用户在与 AI 对话或使用终端，输出应简洁精练",
+        "dev.warp.Warp-Stable": "用户在与 AI 对话或使用终端，输出应简洁精练",
+        "com.microsoft.VSCode": "用户在写代码或与 AI 对话，输出应简洁精练",
+        "com.cursor.Cursor": "用户在与 AI 编程助手对话，输出应简洁精练",
     ]
 
     /// 仅生成动态层自然语言；无可用画像时返回 `nil`（旧版兼容路径，少用）。

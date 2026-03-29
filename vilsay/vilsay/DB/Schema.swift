@@ -6,7 +6,7 @@
 import Foundation
 import GRDB
 
-struct RawLogRecord: Codable, FetchableRecord, PersistableRecord {
+struct RawLogRecord: Codable, FetchableRecord, MutablePersistableRecord {
     var id: Int64?
     var asrText: String
     var polishedText: String
@@ -19,8 +19,15 @@ struct RawLogRecord: Codable, FetchableRecord, PersistableRecord {
     var createdAt: String
     /// PM-07：`OutputMode.rawValue`，默认 `general`。
     var outputMode: String
+    /// L3 Review：后台二次校验结果（不影响主流程输出）。
+    var reviewText: String?
+    var reviewMs: Int?
 
     static let databaseTableName = "raw_log"
+
+    mutating func didInsert(_ inserted: InsertionSuccess) {
+        id = inserted.rowID
+    }
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -34,6 +41,8 @@ struct RawLogRecord: Codable, FetchableRecord, PersistableRecord {
         case userFlaggedError = "user_flagged_error"
         case createdAt = "created_at"
         case outputMode = "output_mode"
+        case reviewText = "review_text"
+        case reviewMs = "review_ms"
     }
 
     init(

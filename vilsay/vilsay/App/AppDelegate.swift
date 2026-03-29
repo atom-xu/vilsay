@@ -46,6 +46,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         Task {
             await AuthService.shared.restoreSession()
+            SubscriptionManager.shared.start()
         }
 
         // ✅ 应用启动时检查所有权限
@@ -82,6 +83,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let ob = OnboardingWindowController()
         ob.showIfNeeded()
         onboarding = ob
+
+        // UX Fix #1：Onboarding 未完成时隐藏主窗口，避免同时弹出两个窗口
+        if !UserDefaults.standard.bool(forKey: UserDefaultsKeys.onboardingDone) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                Self.hideMainWindow()
+            }
+        }
+    }
+
+    /// 隐藏主窗口（Onboarding 期间调用）。
+    private static func hideMainWindow() {
+        for window in NSApp.windows {
+            if (window.identifier?.rawValue == "main" || window.title == "Vilsay"),
+               window.title != "欢迎使用 Vilsay" {
+                window.orderOut(nil)
+            }
+        }
     }
 
     /// 从系统设置返回后同步麦克风 / 辅助功能状态（W7-A06）。

@@ -9,6 +9,7 @@
 //  `invalidate` 后 `DispatchQueue.main.async` + `Task { @MainActor in setupXPCConnection() }`。
 //
 
+import ApplicationServices
 import Foundation
 import os.log
 
@@ -38,6 +39,12 @@ private final class HotkeyXPCClientBridge: NSObject, HotkeyMonitorClientProtocol
     }
 }
 
+/// Fallback CGEventTap 回调所需的可变上下文（C 函数指针无法捕获 Swift 闭包状态）。
+private final class FallbackTapContext: @unchecked Sendable {
+    var isFnPressed = false
+    var tap: CFMachPort?
+}
+
 /// 热键管理器：XPC 双向通道（主进程导出 `HotkeyMonitorClientProtocol`）。
 @MainActor
 final class HotkeyManager {
@@ -59,6 +66,14 @@ final class HotkeyManager {
     /// XPC 中断/失效后 **禁止** 在 `interruptionHandler` 栈上同步 `invalidate()`（会与 XPC 运行时互等导致主线程卡死、日志停刷）。
     /// 仅置位，由 `checkHealth` / 回前台时 `performSoftReconnect()` 在后台 `invalidate` 后再回主线程 `setup`。
     private var needsXPCReconnect = false
+
+    /// XPC 连续失败计数；达到上限后切换到主进程内 fallback。
+    private var xpcReconnectFailures = 0
+    private static let maxXPCReconnectFailures = 3
+    /// 主进程内 fallback CGEventTap（XPC 不可用时降级）。
+    private var fallbackEventTap: CFMachPort?
+    /// 标记当前是否运行在 fallback 模式。
+    private(set) var isFallbackMode = false
 
     private init() {}
 
@@ -91,6 +106,7 @@ final class HotkeyManager {
         needsXPCReconnect = false
         xpcConnection?.invalidate()
         xpcConnection = nil
+        teardownFallbackEventTap()
         fnLongPressTask?.cancel()
         fnLongPressTask = nil
         fnKeyDown = false
@@ -101,6 +117,9 @@ final class HotkeyManager {
 
     // MARK: - XPC
 
+    /// XPC 首次 ping 超时（秒）——超时立即 fallback，不让用户等。
+    private static let xpcPingTimeoutSeconds: TimeInterval = 2.0
+
     private func setupXPCConnection() {
         let connection = NSXPCConnection(serviceName: "com.vilsay.HotkeyMonitor")
         connection.exportedInterface = NSXPCInterface(with: HotkeyMonitorClientProtocol.self)
@@ -108,7 +127,6 @@ final class HotkeyManager {
         connection.remoteObjectInterface = NSXPCInterface(with: HotkeyMonitorProtocol.self)
 
         connection.interruptionHandler = {
-            // 切勿在此回调内 Task.sleep + MainActor.invalidate：易与 XPC 内部锁互等，主线程永久卡死。
             Self.log.info("ℹ️ HotkeyMonitor XPC 中断（已推迟重连，避免卡死）")
             Task { @MainActor in
                 HotkeyManager.shared.needsXPCReconnect = true
@@ -125,25 +143,57 @@ final class HotkeyManager {
         connection.resume()
         xpcConnection = connection
 
+        // 带超时的 ping：如果 XPC service 无法响应，快速切换到 fallback
+        var pingReceived = false
         let proxy = connection.remoteObjectProxyWithErrorHandler { error in
             Self.log.error("❌ XPC 代理错误: \(error.localizedDescription)")
         } as? HotkeyMonitorProtocol
 
         proxy?.ping { reply in
+            pingReceived = true
             Self.log.info("✅ XPC 连接成功: \(reply)")
+        }
+
+        // 超时检测：如果 N 秒内 ping 没回来，直接 fallback
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.xpcPingTimeoutSeconds) { [weak self] in
+            guard let self, self.isRunning, !self.isFallbackMode else { return }
+            if !pingReceived {
+                Self.log.warning("⚠️ XPC ping 超时（\(Self.xpcPingTimeoutSeconds)s），直接切换 fallback CGEventTap")
+                self.xpcConnection?.invalidate()
+                self.xpcConnection = nil
+                self.xpcReconnectFailures = Self.maxXPCReconnectFailures
+                self.installFallbackEventTap()
+                self.needsXPCReconnect = false
+            }
         }
     }
 
     @MainActor
     private func clearXPCConnectionAndMarkReconnect() {
         xpcConnection = nil
-        needsXPCReconnect = true
+        xpcReconnectFailures += 1
+        if xpcReconnectFailures >= Self.maxXPCReconnectFailures && !isFallbackMode {
+            Self.log.warning("⚠️ XPC 连续失败 \(self.xpcReconnectFailures) 次，切换到主进程内 fallback CGEventTap")
+            installFallbackEventTap()
+            needsXPCReconnect = false
+        } else {
+            needsXPCReconnect = true
+        }
     }
 
     /// 在 **utility 队列** 上对旧连接 `invalidate()`，再回到主线程 `setupXPCConnection()`，避免在主线程/XPC 回调栈上同步 `invalidate` 导致死锁。
     @MainActor
     private func performSoftReconnect() {
-        guard isRunning else { return }
+        guard isRunning, !isFallbackMode else { return }
+
+        // 已达失败上限，直接切 fallback，不再重连 XPC
+        if xpcReconnectFailures >= Self.maxXPCReconnectFailures {
+            Self.log.warning("⚠️ XPC 连续失败 \(self.xpcReconnectFailures) 次，切换到主进程内 fallback CGEventTap")
+            installFallbackEventTap()
+            needsXPCReconnect = false
+            return
+        }
+
         Self.log.info("🔁 正在重连 HotkeyMonitor XPC（后台 invalidate）…")
         let holder = NSXPCConnectionHolder(xpcConnection)
         xpcConnection = nil
@@ -151,7 +201,7 @@ final class HotkeyManager {
             holder.connection?.invalidate()
             DispatchQueue.main.async {
                 Task { @MainActor in
-                    guard HotkeyManager.shared.isRunning else { return }
+                    guard HotkeyManager.shared.isRunning, !HotkeyManager.shared.isFallbackMode else { return }
                     HotkeyManager.shared.setupXPCConnection()
                 }
             }
@@ -160,12 +210,74 @@ final class HotkeyManager {
 
     @MainActor
     private func tryReconnectIfNeeded(reason: String) -> Bool {
-        guard isRunning, needsXPCReconnect else { return false }
+        guard isRunning, needsXPCReconnect, !isFallbackMode else { return false }
         needsXPCReconnect = false
         Self.log.info("🔁 因 \(reason) 触发 XPC 软重连")
         performSoftReconnect()
         return true
     }
+
+    // MARK: - Fallback（主进程内 CGEventTap，XPC 不可用时降级）
+
+    /// 在主进程内安装 CGEventTap 作为 XPC 不可用时的降级方案。
+    /// 优点：直接利用主应用已有的辅助功能信任。
+    /// 缺点：主线程长时间阻塞时热键可能延迟。
+    private func installFallbackEventTap() {
+        guard fallbackEventTap == nil else { return }
+
+        let eventMask: CGEventMask = 1 << CGEventType.flagsChanged.rawValue
+        guard let tap = CGEvent.tapCreate(
+            tap: .cgSessionEventTap,
+            place: .headInsertEventTap,
+            options: .defaultTap,
+            eventsOfInterest: eventMask,
+            callback: { _, type, event, refcon -> Unmanaged<CGEvent>? in
+                if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+                    if let refcon, let tap = Unmanaged<FallbackTapContext>.fromOpaque(refcon).takeUnretainedValue().tap {
+                        CGEvent.tapEnable(tap: tap, enable: true)
+                    }
+                    return Unmanaged.passUnretained(event)
+                }
+                guard type == .flagsChanged else { return Unmanaged.passUnretained(event) }
+
+                let flags = event.flags
+                let isFnNow = flags.contains(.maskSecondaryFn)
+                guard let refcon else { return Unmanaged.passUnretained(event) }
+                let ctx = Unmanaged<FallbackTapContext>.fromOpaque(refcon).takeUnretainedValue()
+                guard isFnNow != ctx.isFnPressed else { return Unmanaged.passUnretained(event) }
+                ctx.isFnPressed = isFnNow
+                let ts = CFAbsoluteTimeGetCurrent()
+                Task { @MainActor in
+                    HotkeyManager.shared.applyFnEdgeFromXPC(isDown: isFnNow, remoteTimestamp: ts)
+                }
+                return Unmanaged.passUnretained(event)
+            },
+            userInfo: Unmanaged.passUnretained(fallbackTapContext).toOpaque()
+        ) else {
+            Self.log.error("❌ Fallback CGEventTap 创建失败（辅助功能权限？）")
+            return
+        }
+
+        fallbackEventTap = tap
+        fallbackTapContext.tap = tap
+        let src = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
+        CFRunLoopAddSource(CFRunLoopGetCurrent(), src, .commonModes)
+        CGEvent.tapEnable(tap: tap, enable: true)
+        isFallbackMode = true
+        Self.log.info("✅ 主进程 fallback CGEventTap 已安装（热键可用，但主线程阻塞时可能延迟）")
+    }
+
+    private func teardownFallbackEventTap() {
+        if let tap = fallbackEventTap {
+            CGEvent.tapEnable(tap: tap, enable: false)
+            CFMachPortInvalidate(tap)
+        }
+        fallbackEventTap = nil
+        isFallbackMode = false
+    }
+
+    /// CGEventTap C 回调需要 refcon 传递可变状态。
+    private let fallbackTapContext = FallbackTapContext()
 
     // MARK: - Fn 边沿（由 XPC 客户端协议回调，经 main.async 投递）
 
@@ -256,7 +368,7 @@ final class HotkeyManager {
     // MARK: - 兼容旧 API
 
     static var isEventTapInstalled: Bool {
-        shared.isRunning
+        shared.isRunning || shared.isFallbackMode
     }
 
     static func checkHealth() {
@@ -270,6 +382,9 @@ final class HotkeyManager {
             start()
             return
         }
+
+        // Fallback 模式下不再尝试 XPC，热键已通过主进程内 CGEventTap 工作。
+        if isFallbackMode { return }
 
         if tryReconnectIfNeeded(reason: "健康检查（待重连标志）") {
             return

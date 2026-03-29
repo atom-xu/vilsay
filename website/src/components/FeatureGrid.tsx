@@ -8,15 +8,15 @@ const features = [
   },
   {
     icon: "✨",
-    title: "AI 智能润色",
+    title: "AI3 智能润色",
     desc: "自动纠正识别错误、理顺表达逻辑、补全标点——输出即可直接发送。",
     accent: "from-vilsay-pink/10 to-vilsay-purple/5",
     iconBg: "bg-vilsay-pink/15",
   },
   {
     icon: "🧠",
-    title: "越用越懂你",
-    desc: "AI3 在后台学习你的口头禅、专业术语和表达风格，悄悄提升每次润色质量。",
+    title: "洞察引擎",
+    desc: "洞察引擎在后台学习你的口头禅、专业术语和表达风格，悄悄提升每次润色质量。",
     accent: "from-vilsay-purple/10 to-vilsay-indigo/5",
     iconBg: "bg-vilsay-purple/15",
   },
@@ -37,7 +37,7 @@ const features = [
   {
     icon: "📚",
     title: "自定义词典",
-    desc: "一键收录专有名词、品牌术语，AI 也会主动推荐你常说的词条。",
+    desc: "一键收录专有名词、品牌术语，AI3 也会主动推荐你常说的词条。",
     accent: "from-vilsay-pink/10 to-vilsay-purple/5",
     iconBg: "bg-vilsay-pink/15",
   },
